@@ -1,4 +1,4 @@
-package com.example.jayzhang.hamburger;
+package com.example.jayzhang.LetsGo;
 
 import org.junit.Test;
 

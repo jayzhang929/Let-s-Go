@@ -1,4 +1,4 @@
-package com.example.jayzhang.hamburger;
+package com.example.jayzhang.LetsGo;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
