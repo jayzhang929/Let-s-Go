@@ -1,6 +1,9 @@
 package com.example.jayzhang.LetsGo;
 
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.design.widget.FloatingActionButton;
 import android.util.Log;
 import android.view.View;
@@ -21,6 +24,7 @@ import com.yelp.clientlib.connection.YelpAPIFactory;
 import com.yelp.clientlib.entities.Business;
 import com.yelp.clientlib.entities.SearchResponse;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -150,12 +154,7 @@ public class MainActivity extends AppCompatActivity
                 ArrayList<Business> businesses = searchResponse.businesses();
 
                 Log.d("total results: ", String.valueOf(totalNumberOfResult));
-                //Log.d("businesses size: ", String.valueOf(businesses.size()));
-                /*
-                Log.d("business name", businesses.get(0).name());
-                Log.d("business location: ", businesses.get(0).location().toString());
-                Log.d("business image: ", businesses.get(0).imageUrl());
-                */
+
                 createGridView(businesses);
             }
 
@@ -171,7 +170,21 @@ public class MainActivity extends AppCompatActivity
 
     private void createGridView(ArrayList<Business> businesses) {
         PlaceAdapter placeAdapter = new PlaceAdapter(this);
+        ArrayList<Bitmap> imageDrawables = new ArrayList<Bitmap>();
+
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
+        try {
+            for (Business b : businesses)
+                imageDrawables.add(PlaceAdapter.bitmapFromUrl(b.imageUrl()));
+        } catch (IOException e) {
+
+        }
+
         placeAdapter.setBusiness(businesses);
+        placeAdapter.setPlaceImages(imageDrawables);
+
         GridView gridView = (GridView) findViewById(R.id.gridview);
         gridView.setAdapter(placeAdapter);
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {

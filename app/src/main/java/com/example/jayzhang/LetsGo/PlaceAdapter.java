@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
+import android.os.StrictMode;
 import android.support.v7.widget.CardView;
 import android.util.Log;
 import android.view.View;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 public class PlaceAdapter extends BaseAdapter {
     private Context mContext;
     private ArrayList<Business> businesses;
+    private ArrayList<Bitmap> placeImages;
 
     public PlaceAdapter(Context c) {
         mContext = c;
@@ -50,9 +52,7 @@ public class PlaceAdapter extends BaseAdapter {
         this.businesses = b;
     }
 
-    public ArrayList<Business> getBusiness() {
-        return this.businesses;
-    }
+    public void setPlaceImages(ArrayList<Bitmap> placeImages) {this.placeImages = placeImages; }
 
     // create a new ImageView for each item referenced by the Adapter
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -70,9 +70,9 @@ public class PlaceAdapter extends BaseAdapter {
             cardView.setContentPadding(10, 10, 10, 10);
 
             linearLayout.setOrientation(LinearLayout.VERTICAL);
-            linearLayout.setWeightSum(1);
-            imageView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, 0.7f));
-            textView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, 0.3f));
+            // linearLayout.setWeightSum(1);
+            imageView.setLayoutParams(new LinearLayout.LayoutParams(270, 400));
+            textView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             textView.setTextSize(10);
 
             linearLayout.addView(imageView);
@@ -88,13 +88,26 @@ public class PlaceAdapter extends BaseAdapter {
         ImageView curImageView = (ImageView) ((LinearLayout)cardView.getChildAt(0)).getChildAt(0);
         TextView curTextView = (TextView) ((LinearLayout)cardView.getChildAt(0)).getChildAt(1);
         // curImageView.setImageResource(R.drawable.sample_0);
-        new DownloadImageTask(curImageView).execute(businesses.get(position).imageUrl());
+
+        curImageView.setImageBitmap(placeImages.get(position));
         curTextView.setText(businesses.get(position).name());
 
         return cardView;
 
     }
-    
+
+    // source: http://stackoverflow.com/questions/3375166/android-drawable-images-from-url
+    public static Bitmap bitmapFromUrl(String url) throws IOException {
+        Bitmap x;
+
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.connect();
+        InputStream input = connection.getInputStream();
+
+        x = BitmapFactory.decodeStream(input);
+        return x;
+    }
+
     // source: http://stackoverflow.com/questions/29001163/convert-image-url-to-drawable-resource-id-in-android
     private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
         ImageView mImageView;
