@@ -31,6 +31,7 @@ public class PlaceAdapter extends BaseAdapter {
     private Context mContext;
     private ArrayList<Business> businesses;
     private ArrayList<Bitmap> placeImages;
+    private ArrayList<Bitmap> placeRatings;
 
     public PlaceAdapter(Context c) {
         mContext = c;
@@ -54,6 +55,8 @@ public class PlaceAdapter extends BaseAdapter {
 
     public void setPlaceImages(ArrayList<Bitmap> placeImages) {this.placeImages = placeImages; }
 
+    public void setPlaceRatings(ArrayList<Bitmap> placeRatings) {this.placeRatings = placeRatings; }
+
     // create a new ImageView for each item referenced by the Adapter
     public View getView(int position, View convertView, ViewGroup parent) {
         CardView cardView;
@@ -64,33 +67,35 @@ public class PlaceAdapter extends BaseAdapter {
             LinearLayout linearLayout = new LinearLayout(mContext);
             ImageView imageView = new ImageView(mContext);
             TextView textView = new TextView(mContext);
+            ImageView ratingView = new ImageView(mContext);
 
             // **Bug: setting layout params dynamically depending on device screen size
             cardView.setLayoutParams(new GridView.LayoutParams(300, 450));
             cardView.setContentPadding(10, 10, 10, 10);
 
             linearLayout.setOrientation(LinearLayout.VERTICAL);
-            // linearLayout.setWeightSum(1);
-            imageView.setLayoutParams(new LinearLayout.LayoutParams(270, 400));
-            textView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            linearLayout.setWeightSum(1);
+            imageView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, .6f));
+            textView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, .2f));
+            ratingView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, .2f));
             textView.setTextSize(10);
 
             linearLayout.addView(imageView);
             linearLayout.addView(textView);
+            linearLayout.addView(ratingView);
             cardView.addView(linearLayout);
+
         } else {
             cardView = (CardView) convertView;
         }
 
-        Log.d("position: ", String.valueOf(position));
-        Log.d("businesses size: ", String.valueOf(businesses.size()));
-
         ImageView curImageView = (ImageView) ((LinearLayout)cardView.getChildAt(0)).getChildAt(0);
         TextView curTextView = (TextView) ((LinearLayout)cardView.getChildAt(0)).getChildAt(1);
-        // curImageView.setImageResource(R.drawable.sample_0);
+        ImageView curRatingView = (ImageView) ((LinearLayout)cardView.getChildAt(0)).getChildAt(2);
 
         curImageView.setImageBitmap(placeImages.get(position));
         curTextView.setText(businesses.get(position).name());
+        curRatingView.setImageBitmap(placeRatings.get(position));
 
         return cardView;
 
@@ -108,28 +113,4 @@ public class PlaceAdapter extends BaseAdapter {
         return x;
     }
 
-    // source: http://stackoverflow.com/questions/29001163/convert-image-url-to-drawable-resource-id-in-android
-    private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
-        ImageView mImageView;
-        public DownloadImageTask(ImageView imageView){
-            this.mImageView = imageView;
-        }
-
-        protected Bitmap doInBackground(String... urls) {
-            String urldisplay = urls[0];
-            Bitmap mIcon11 = null;
-            try {
-                InputStream in = new java.net.URL(urldisplay).openStream();
-                mIcon11 = BitmapFactory.decodeStream(in);
-            } catch (Exception e) {
-                Log.e("Error", e.getMessage());
-                e.printStackTrace();
-            }
-            return mIcon11;
-        }
-
-        protected void onPostExecute(Bitmap result) {
-            mImageView.setBackground(new BitmapDrawable(mContext.getResources(), result));
-        }
-    }
 }

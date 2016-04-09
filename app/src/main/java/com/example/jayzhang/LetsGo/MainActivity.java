@@ -1,5 +1,8 @@
 package com.example.jayzhang.LetsGo;
 
+import android.app.ProgressDialog;
+import android.app.SearchManager;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -15,8 +18,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.SearchView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.yelp.clientlib.connection.YelpAPI;
@@ -35,12 +42,15 @@ import retrofit.Response;
 import retrofit.Retrofit;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener {
 
     private final static String consumerKey = "2q_fORhYgW2bMulCBkVOsw";
     private final static String consumerSecret = "5Xf4mXoItuhF66E373fXLFie1zI";
     private final static String token = "veqUNoadchDOaDdbHd_gUhfJXJX1r9GO";
     private final static String tokenSecret = "ZUZ88amNmp25m_-5oyqY6iTfyzU";
+
+    private SearchView searchView;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +80,9 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setTitle("Loading");
+        progressDialog.setMessage("Wait while Let's Go find your destination :)");
         yelpSearch("College Park, MD");
 
 
@@ -89,6 +102,17 @@ public class MainActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
+        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        searchView = new SearchView(this);
+        menu.findItem(R.id.search).setActionView(searchView);
+
+        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        searchView.setOnQueryTextListener(this);
+        searchView.setOnCloseListener(this);
+        searchView.setIconified(true);
+        searchView.setFocusable(true);
+        searchView.setQueryHint("Let's Go to ...");
+
         return true;
     }
 
@@ -133,6 +157,10 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void yelpSearch(String location) {
+        TextView textView = (TextView) findViewById(R.id.placeName);
+        textView.setText(location);
+        progressDialog.show();
+
         YelpAPIFactory apiFactory = new YelpAPIFactory(consumerKey, consumerSecret, token, tokenSecret);
         YelpAPI yelpAPI = apiFactory.createAPI();
 
@@ -171,28 +199,52 @@ public class MainActivity extends AppCompatActivity
     private void createGridView(ArrayList<Business> businesses) {
         PlaceAdapter placeAdapter = new PlaceAdapter(this);
         ArrayList<Bitmap> imageDrawables = new ArrayList<Bitmap>();
+        ArrayList<Bitmap> ratingDrawables = new ArrayList<Bitmap>();
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
         try {
-            for (Business b : businesses)
+            for (Business b : businesses) {
                 imageDrawables.add(PlaceAdapter.bitmapFromUrl(b.imageUrl()));
+                ratingDrawables.add(PlaceAdapter.bitmapFromUrl(b.ratingImgUrl()));
+            }
         } catch (IOException e) {
 
         }
 
         placeAdapter.setBusiness(businesses);
         placeAdapter.setPlaceImages(imageDrawables);
+        placeAdapter.setPlaceRatings(ratingDrawables);
 
         GridView gridView = (GridView) findViewById(R.id.gridview);
         gridView.setAdapter(placeAdapter);
+        progressDialog.hide();
+        Log.d("images: ", "all created");
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Toast.makeText(MainActivity.this, "current position is " + position, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    @Override
+    public boolean onClose() {
+        return true;
+    }
+
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        searchView.clearFocus();
+        yelpSearch(query);
+
+        return true;
+    }
+
+    @Override
+    public boolean onQueryTextChange(String newText) {
+        return true;
     }
 
 }
