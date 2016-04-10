@@ -3,6 +3,7 @@ package com.example.jayzhang.LetsGo;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -43,6 +44,10 @@ import retrofit.Retrofit;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener {
+
+    public final static String CURRENT_BUSINESS = "com.example.jayzhang.LetsGo.BUSINESS";
+    public final static String CURRENT_BUSINESS_IMAGE = "com.example.jayzhang.LetsGo.BUSINESS_IMAGE";
+    public final static String CURRENT_BUSINESS_RATING = "com.example.jayzhang.LetsGo.BUSINESS_RATING";
 
     private final static String consumerKey = "2q_fORhYgW2bMulCBkVOsw";
     private final static String consumerSecret = "5Xf4mXoItuhF66E373fXLFie1zI";
@@ -197,7 +202,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void createGridView(ArrayList<Business> businesses) {
-        PlaceAdapter placeAdapter = new PlaceAdapter(this);
+        final PlaceAdapter placeAdapter = new PlaceAdapter(this);
         ArrayList<Bitmap> imageDrawables = new ArrayList<Bitmap>();
         ArrayList<Bitmap> ratingDrawables = new ArrayList<Bitmap>();
 
@@ -224,7 +229,11 @@ public class MainActivity extends AppCompatActivity
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Toast.makeText(MainActivity.this, "current position is " + position, Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(MainActivity.this, PlaceActivity.class);
+                intent.putExtra(CURRENT_BUSINESS, placeAdapter.getBusiness(position));
+                intent.putExtra(CURRENT_BUSINESS_IMAGE, placeAdapter.getPlaceImage(position));
+                intent.putExtra(CURRENT_BUSINESS_RATING, placeAdapter.getPlaceRating(position));
+                startActivity(intent);
             }
         });
     }

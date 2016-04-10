@@ -57,6 +57,18 @@ public class PlaceAdapter extends BaseAdapter {
 
     public void setPlaceRatings(ArrayList<Bitmap> placeRatings) {this.placeRatings = placeRatings; }
 
+    public Business getBusiness(int position) {
+        return businesses.get(position);
+    }
+
+    public Bitmap getPlaceImage(int position) {
+        return placeImages.get(position);
+    }
+
+    public Bitmap getPlaceRating(int position) {
+        return placeRatings.get(position);
+    }
+
     // create a new ImageView for each item referenced by the Adapter
     public View getView(int position, View convertView, ViewGroup parent) {
         CardView cardView;
