@@ -4,6 +4,7 @@ import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -47,10 +48,13 @@ import retrofit.Retrofit;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener {
 
-    public final static String CURRENT_BUSINESS = "com.example.jayzhang.LetsGo.BUSINESS";
+    public final static String CURRENT_BUSINESS_ADDRESS = "com.example.jayzhang.LetsGo.BUSINESS_ADDRESS";
     public final static String CURRENT_BUSINESS_IMAGE = "com.example.jayzhang.LetsGo.BUSINESS_IMAGE";
     public final static String CURRENT_BUSINESS_RATING = "com.example.jayzhang.LetsGo.BUSINESS_RATING";
-    static final String CURRENT_ADAPTER = "currentAdapter";
+    public final static String CURRENT_BUSINESS_DISTANCE = "com.example.jayzhang.LetsGo.BUSINESS_DISTANCE";
+    static final String CURRENT_PLACE = "currentPlace";
+    public final String PREFS_NAME = "SharedPrefs";
+    public final int PREFS_MODE = 0;
 
     private final static String consumerKey = "2q_fORhYgW2bMulCBkVOsw";
     private final static String consumerSecret = "5Xf4mXoItuhF66E373fXLFie1zI";
@@ -61,6 +65,7 @@ public class MainActivity extends AppCompatActivity
     private ProgressDialog progressDialog;
     private PlaceAdapter placeAdapter;
     private String curPlace;
+    private SharedPreferences.Editor editor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,13 +100,6 @@ public class MainActivity extends AppCompatActivity
         progressDialog.setMessage("Wait while Let's Go find your destination :)");
 
         curPlace = "College Park, MD";
-        if (savedInstanceState != null) {
-            curPlace = savedInstanceState.getString(CURRENT_ADAPTER);
-            Log.d("curPlace: ", curPlace);
-        }
-
-        yelpSearch(curPlace);
-
     }
 
     @Override
@@ -115,11 +113,32 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onSaveInstanceState(Bundle savedInstanceState) {
-        // savedInstanceState.putSerializable(CURRENT_ADAPTER, placeAdapter);
-        savedInstanceState.putString(CURRENT_ADAPTER, curPlace);
+    public void onResume() {
+        super.onResume();
 
-        super.onSaveInstanceState(savedInstanceState);
+        SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, PREFS_MODE);
+        curPlace = sharedPreferences.getString(CURRENT_PLACE, "College Park, MD");
+
+        yelpSearch(curPlace);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, PREFS_MODE);
+        editor = sharedPreferences.edit();
+        editor.putString(CURRENT_PLACE, curPlace);
+
+        editor.commit();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        // editor.clear();
+        // editor.commit();
     }
 
     @Override
@@ -254,9 +273,10 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(MainActivity.this, PlaceActivity.class);
-                intent.putExtra(CURRENT_BUSINESS, placeAdapter.getBusiness(position));
+                intent.putExtra(CURRENT_BUSINESS_ADDRESS, placeAdapter.getBusiness(position).location().displayAddress());
                 intent.putExtra(CURRENT_BUSINESS_IMAGE, placeAdapter.getPlaceImage(position));
                 intent.putExtra(CURRENT_BUSINESS_RATING, placeAdapter.getPlaceRating(position));
+                intent.putExtra(CURRENT_BUSINESS_DISTANCE, placeAdapter.getBusiness(position).distance());
                 startActivity(intent);
             }
         });
