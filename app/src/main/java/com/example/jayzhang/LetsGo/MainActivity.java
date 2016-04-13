@@ -27,12 +27,14 @@ import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.location.places.Place;
 import com.yelp.clientlib.connection.YelpAPI;
 import com.yelp.clientlib.connection.YelpAPIFactory;
 import com.yelp.clientlib.entities.Business;
 import com.yelp.clientlib.entities.SearchResponse;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -48,6 +50,7 @@ public class MainActivity extends AppCompatActivity
     public final static String CURRENT_BUSINESS = "com.example.jayzhang.LetsGo.BUSINESS";
     public final static String CURRENT_BUSINESS_IMAGE = "com.example.jayzhang.LetsGo.BUSINESS_IMAGE";
     public final static String CURRENT_BUSINESS_RATING = "com.example.jayzhang.LetsGo.BUSINESS_RATING";
+    static final String CURRENT_ADAPTER = "currentAdapter";
 
     private final static String consumerKey = "2q_fORhYgW2bMulCBkVOsw";
     private final static String consumerSecret = "5Xf4mXoItuhF66E373fXLFie1zI";
@@ -56,6 +59,8 @@ public class MainActivity extends AppCompatActivity
 
     private SearchView searchView;
     private ProgressDialog progressDialog;
+    private PlaceAdapter placeAdapter;
+    private String curPlace;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,8 +93,14 @@ public class MainActivity extends AppCompatActivity
         progressDialog = new ProgressDialog(this);
         progressDialog.setTitle("Loading");
         progressDialog.setMessage("Wait while Let's Go find your destination :)");
-        yelpSearch("College Park, MD");
 
+        curPlace = "College Park, MD";
+        if (savedInstanceState != null) {
+            curPlace = savedInstanceState.getString(CURRENT_ADAPTER);
+            Log.d("curPlace: ", curPlace);
+        }
+
+        yelpSearch(curPlace);
 
     }
 
@@ -101,6 +112,14 @@ public class MainActivity extends AppCompatActivity
         } else {
             super.onBackPressed();
         }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        // savedInstanceState.putSerializable(CURRENT_ADAPTER, placeAdapter);
+        savedInstanceState.putString(CURRENT_ADAPTER, curPlace);
+
+        super.onSaveInstanceState(savedInstanceState);
     }
 
     @Override
@@ -188,7 +207,7 @@ public class MainActivity extends AppCompatActivity
 
                 Log.d("total results: ", String.valueOf(totalNumberOfResult));
 
-                createGridView(businesses);
+                createPlaceAdapter(businesses);
             }
 
             @Override
@@ -201,8 +220,8 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    private void createGridView(ArrayList<Business> businesses) {
-        final PlaceAdapter placeAdapter = new PlaceAdapter(this);
+    private void createPlaceAdapter(ArrayList<Business> businesses) {
+        placeAdapter = new PlaceAdapter(this);
         ArrayList<Bitmap> imageDrawables = new ArrayList<Bitmap>();
         ArrayList<Bitmap> ratingDrawables = new ArrayList<Bitmap>();
 
@@ -218,10 +237,15 @@ public class MainActivity extends AppCompatActivity
 
         }
 
-        placeAdapter.setBusiness(businesses);
+        placeAdapter.setBusinesses(businesses);
         placeAdapter.setPlaceImages(imageDrawables);
         placeAdapter.setPlaceRatings(ratingDrawables);
 
+        createGridView();
+
+    }
+
+    private void createGridView(){
         GridView gridView = (GridView) findViewById(R.id.gridview);
         gridView.setAdapter(placeAdapter);
         progressDialog.hide();
@@ -245,6 +269,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onQueryTextSubmit(String query) {
+        curPlace = new String(query);
         searchView.clearFocus();
         yelpSearch(query);
 

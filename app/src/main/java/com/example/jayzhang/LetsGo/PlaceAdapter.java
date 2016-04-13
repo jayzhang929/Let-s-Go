@@ -20,6 +20,7 @@ import com.yelp.clientlib.entities.Business;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ public class PlaceAdapter extends BaseAdapter {
     private ArrayList<Business> businesses;
     private ArrayList<Bitmap> placeImages;
     private ArrayList<Bitmap> placeRatings;
+    // private static final long serialVersionUID = -7060210544600464481L;
 
     public PlaceAdapter(Context c) {
         mContext = c;
@@ -49,7 +51,7 @@ public class PlaceAdapter extends BaseAdapter {
         return 0;
     }
 
-    public void setBusiness(ArrayList<Business> b) {
+    public void setBusinesses(ArrayList<Business> b) {
         this.businesses = b;
     }
 
