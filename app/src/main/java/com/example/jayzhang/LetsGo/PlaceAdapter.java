@@ -5,10 +5,12 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.media.Image;
 import android.os.AsyncTask;
 import android.os.StrictMode;
 import android.support.v7.widget.CardView;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -24,6 +26,7 @@ import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.zip.Inflater;
 
 /**
  * Created by jayzhang on 3/25/16.
@@ -33,7 +36,6 @@ public class PlaceAdapter extends BaseAdapter {
     private ArrayList<Business> businesses;
     private ArrayList<Bitmap> placeImages;
     private ArrayList<Bitmap> placeRatings;
-    // private static final long serialVersionUID = -7060210544600464481L;
 
     public PlaceAdapter(Context c) {
         mContext = c;
@@ -78,25 +80,13 @@ public class PlaceAdapter extends BaseAdapter {
         if (convertView == null) {
             // if it's not recycled, initialize some attributes
             cardView = new CardView(mContext);
-            LinearLayout linearLayout = new LinearLayout(mContext);
-            ImageView imageView = new ImageView(mContext);
-            TextView textView = new TextView(mContext);
-            ImageView ratingView = new ImageView(mContext);
-
             // **Bug: setting layout params dynamically depending on device screen size
             cardView.setLayoutParams(new GridView.LayoutParams(300, 450));
             cardView.setContentPadding(10, 10, 10, 10);
 
-            linearLayout.setOrientation(LinearLayout.VERTICAL);
-            linearLayout.setWeightSum(1);
-            imageView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, .6f));
-            textView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, .2f));
-            ratingView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, .2f));
-            textView.setTextSize(10);
+            LayoutInflater layoutInflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            LinearLayout linearLayout = (LinearLayout) layoutInflater.inflate(R.layout.individual_card, parent, false);
 
-            linearLayout.addView(imageView);
-            linearLayout.addView(textView);
-            linearLayout.addView(ratingView);
             cardView.addView(linearLayout);
 
         } else {
@@ -107,9 +97,14 @@ public class PlaceAdapter extends BaseAdapter {
         TextView curTextView = (TextView) ((LinearLayout)cardView.getChildAt(0)).getChildAt(1);
         ImageView curRatingView = (ImageView) ((LinearLayout)cardView.getChildAt(0)).getChildAt(2);
 
-        curImageView.setImageBitmap(placeImages.get(position));
-        curTextView.setText(businesses.get(position).name());
-        curRatingView.setImageBitmap(placeRatings.get(position));
+        if (position < placeImages.size())
+            curImageView.setImageBitmap(placeImages.get(position));
+
+        if (position < businesses.size())
+            curTextView.setText(businesses.get(position).name());
+
+        if (position < placeRatings.size())
+            curRatingView.setImageBitmap(placeRatings.get(position));
 
         return cardView;
 
