@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import retrofit.Callback;
 import retrofit.Response;
@@ -50,11 +51,14 @@ public class MainActivity extends AppCompatActivity
 
     public final static String CURRENT_BUSINESS_ADDRESS = "com.example.jayzhang.LetsGo.BUSINESS_ADDRESS";
     public final static String CURRENT_BUSINESS_IMAGE = "com.example.jayzhang.LetsGo.BUSINESS_IMAGE";
+    public final static String CURRENT_BUSINESS_NAME = "com.example.jayzhang.LetsGo.BUSINESS_NAME";
     public final static String CURRENT_BUSINESS_RATING = "com.example.jayzhang.LetsGo.BUSINESS_RATING";
     public final static String CURRENT_BUSINESS_DISTANCE = "com.example.jayzhang.LetsGo.BUSINESS_DISTANCE";
     static final String CURRENT_PLACE = "currentPlace";
     public final String PREFS_NAME = "SharedPrefs";
     public final int PREFS_MODE = 0;
+    public static final String PREFS_NAME_BUSINESS = "selectedBusiness";
+    public static final int PREFS_MODE_BUSINESS = 1;
 
     private final static String consumerKey = "2q_fORhYgW2bMulCBkVOsw";
     private final static String consumerSecret = "5Xf4mXoItuhF66E373fXLFie1zI";
@@ -66,6 +70,7 @@ public class MainActivity extends AppCompatActivity
     private PlaceAdapter placeAdapter;
     private String curPlace;
     private SharedPreferences.Editor editor;
+    public static SharedPreferences.Editor selectedBusinesses;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,11 +120,13 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onResume() {
         super.onResume();
+        Log.d("selectedBusiness: ", getSharedPreferences(PREFS_NAME_BUSINESS, PREFS_MODE_BUSINESS).getAll().toString());
 
         SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, PREFS_MODE);
         curPlace = sharedPreferences.getString(CURRENT_PLACE, "College Park, MD");
 
         yelpSearch(curPlace);
+        Log.d("onResume: ", "finished");
     }
 
     @Override
@@ -273,6 +280,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(MainActivity.this, PlaceActivity.class);
+                intent.putExtra(CURRENT_BUSINESS_NAME, placeAdapter.getBusiness(position).name());
                 intent.putExtra(CURRENT_BUSINESS_ADDRESS, placeAdapter.getBusiness(position).location().displayAddress());
                 intent.putExtra(CURRENT_BUSINESS_IMAGE, placeAdapter.getPlaceImage(position));
                 intent.putExtra(CURRENT_BUSINESS_RATING, placeAdapter.getPlaceRating(position));

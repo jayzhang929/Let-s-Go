@@ -7,6 +7,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.ArraySet;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -14,14 +15,20 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.android.gms.location.places.Place;
 import com.yelp.clientlib.entities.Business;
 
 import org.w3c.dom.Text;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public class PlaceActivity extends AppCompatActivity {
+
+    String curBusinessName;
+    ArrayList<String> curBusinessAddress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,14 +41,17 @@ public class PlaceActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                MainActivity.selectedBusinesses = getSharedPreferences(MainActivity.PREFS_NAME_BUSINESS, MainActivity.PREFS_MODE_BUSINESS).edit();
+                MainActivity.selectedBusinesses.putStringSet(curBusinessName, new HashSet<String>(curBusinessAddress));
+                MainActivity.selectedBusinesses.commit();
+                Toast.makeText(PlaceActivity.this, curBusinessName + " has been saved to your route!", Toast.LENGTH_LONG).show();
             }
         });
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         Intent intent = getIntent();
-        ArrayList<String> curBusinessAddress = intent.getStringArrayListExtra(MainActivity.CURRENT_BUSINESS_ADDRESS);
+        curBusinessName = intent.getStringExtra(MainActivity.CURRENT_BUSINESS_NAME);
+        curBusinessAddress = intent.getStringArrayListExtra(MainActivity.CURRENT_BUSINESS_ADDRESS);
         Bitmap curBusinessImage = intent.getParcelableExtra(MainActivity.CURRENT_BUSINESS_IMAGE);
         Double curBusinessDistance = intent.getDoubleExtra(MainActivity.CURRENT_BUSINESS_DISTANCE, 0);
 
