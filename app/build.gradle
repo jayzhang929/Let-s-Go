@@ -35,4 +35,5 @@ dependencies {
     compile 'com.yelp.clientlib:yelp-android:1.0.0'
     compile 'com.google.android.gms:play-services-location:8.4.0'
     compile 'com.android.support:cardview-v7:23.2.1'
+    compile 'com.github.woxthebox:draglistview:1.2.4'
 }

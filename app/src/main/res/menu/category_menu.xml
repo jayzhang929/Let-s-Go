@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:title="Festival"
+        android:id="@+id/menuFestival"/>
+    <item android:title="Hiking"
+        android:id="@+id/menuHiking"/>
+    <item android:title="Museums"
+        android:id="@+id/menuMuseums"/>
+    <item android:title="Restaurants"
+        android:id="@+id/menuRestaurants"/>
+    <item android:title="Parks"
+        android:id="@+id/menuParks"/>
+</menu>

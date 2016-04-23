@@ -24,11 +24,14 @@ import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.GridView;
+import android.widget.PopupMenu;
+import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.places.Place;
+import com.squareup.okhttp.Route;
 import com.yelp.clientlib.connection.YelpAPI;
 import com.yelp.clientlib.connection.YelpAPIFactory;
 import com.yelp.clientlib.entities.Business;
@@ -47,7 +50,7 @@ import retrofit.Response;
 import retrofit.Retrofit;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener {
+        implements NavigationView.OnNavigationItemSelectedListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener, OnMenuItemClickListener {
 
     public final static String CURRENT_BUSINESS_ADDRESS = "com.example.jayzhang.LetsGo.BUSINESS_ADDRESS";
     public final static String CURRENT_BUSINESS_IMAGE = "com.example.jayzhang.LetsGo.BUSINESS_IMAGE";
@@ -55,6 +58,7 @@ public class MainActivity extends AppCompatActivity
     public final static String CURRENT_BUSINESS_RATING = "com.example.jayzhang.LetsGo.BUSINESS_RATING";
     public final static String CURRENT_BUSINESS_DISTANCE = "com.example.jayzhang.LetsGo.BUSINESS_DISTANCE";
     static final String CURRENT_PLACE = "currentPlace";
+    static final String CURRENT_TOPIC = "currentTopic";
     public final String PREFS_NAME = "SharedPrefs";
     public final int PREFS_MODE = 0;
     public static final String PREFS_NAME_BUSINESS = "selectedBusiness";
@@ -68,7 +72,8 @@ public class MainActivity extends AppCompatActivity
     private SearchView searchView;
     private ProgressDialog progressDialog;
     private PlaceAdapter placeAdapter;
-    private String curPlace;
+    private String mCurrentPlace;
+    private String mCurrentTopic;
     private SharedPreferences.Editor editor;
     public static SharedPreferences.Editor selectedBusinesses;
 
@@ -104,7 +109,8 @@ public class MainActivity extends AppCompatActivity
         progressDialog.setTitle("Loading");
         progressDialog.setMessage("Wait while Let's Go find your destination :)");
 
-        curPlace = "College Park, MD";
+        mCurrentPlace = "College Park, MD";
+        mCurrentTopic = "parks";
     }
 
     @Override
@@ -123,10 +129,10 @@ public class MainActivity extends AppCompatActivity
         Log.d("selectedBusiness: ", getSharedPreferences(PREFS_NAME_BUSINESS, PREFS_MODE_BUSINESS).getAll().toString());
 
         SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, PREFS_MODE);
-        curPlace = sharedPreferences.getString(CURRENT_PLACE, "College Park, MD");
+        mCurrentPlace = sharedPreferences.getString(CURRENT_PLACE, "College Park, MD");
+        mCurrentTopic = sharedPreferences.getString(CURRENT_TOPIC, "parks");
 
-        yelpSearch(curPlace);
-        Log.d("onResume: ", "finished");
+        yelpSearch(mCurrentPlace, mCurrentTopic);
     }
 
     @Override
@@ -135,7 +141,8 @@ public class MainActivity extends AppCompatActivity
 
         SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, PREFS_MODE);
         editor = sharedPreferences.edit();
-        editor.putString(CURRENT_PLACE, curPlace);
+        editor.putString(CURRENT_PLACE, mCurrentPlace);
+        editor.putString(CURRENT_TOPIC, mCurrentTopic);
 
         editor.commit();
     }
@@ -187,8 +194,11 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
+        if (id == R.id.route) {
             // Handle the camera action
+            Intent intent = new Intent(MainActivity.this, RouteActivity.class);
+            startActivity(intent);
+            return false;
         } else if (id == R.id.nav_gallery) {
 
         } else if (id == R.id.nav_slideshow) {
@@ -206,9 +216,10 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    private void yelpSearch(String location) {
+    private void yelpSearch(String location, String topic) {
         TextView textView = (TextView) findViewById(R.id.placeName);
         textView.setText(location);
+        ((TextView) findViewById(R.id.category_text)).setText(mCurrentTopic);
         progressDialog.show();
 
         YelpAPIFactory apiFactory = new YelpAPIFactory(consumerKey, consumerSecret, token, tokenSecret);
@@ -216,7 +227,7 @@ public class MainActivity extends AppCompatActivity
 
         Map<String, String> params = new HashMap<>();
 
-        params.put("term", "parks");
+        params.put("term", topic);
         // params.put("category-filter", "hiking");
         // params.put("limit", "20");
         params.put("sort", "2");
@@ -297,9 +308,9 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onQueryTextSubmit(String query) {
-        curPlace = new String(query);
+        mCurrentPlace = new String(query);
         searchView.clearFocus();
-        yelpSearch(query);
+        yelpSearch(query, mCurrentTopic);
 
         return true;
     }
@@ -309,4 +320,34 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    public void onCategoriesClick(View view) {
+        PopupMenu popupMenu = new PopupMenu(this, view);
+        popupMenu.setOnMenuItemClickListener(this);
+        popupMenu.inflate(R.menu.category_menu);
+        popupMenu.show();
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menuFestival:
+                mCurrentTopic = "festival";
+                break;
+            case R.id.menuHiking:
+                mCurrentTopic = "hiking";
+                break;
+            case R.id.menuMuseums:
+                mCurrentTopic = "museums";
+                break;
+            case R.id.menuParks:
+                mCurrentTopic = "parks";
+                break;
+            case R.id.menuRestaurants:
+                mCurrentTopic = "restaurants";
+                break;
+        }
+
+        yelpSearch(mCurrentPlace, mCurrentTopic);
+        return true;
+    }
 }
