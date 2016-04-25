@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.design.widget.FloatingActionButton;
@@ -73,7 +74,7 @@ public class MainActivity extends AppCompatActivity
 
     private SearchView searchView;
     private ProgressDialog progressDialog;
-    private PlaceAdapter placeAdapter;
+    private PlaceAdapter mPlaceAdapter;
     private String mCurrentPlace;
     private String mCurrentTopic;
     private SharedPreferences.Editor editor;
@@ -122,7 +123,7 @@ public class MainActivity extends AppCompatActivity
         mCurrentPlace = sharedPreferences.getString(CURRENT_PLACE, "College Park, MD");
         mCurrentTopic = sharedPreferences.getString(CURRENT_TOPIC, "parks");
 
-        yelpSearch(mCurrentPlace, mCurrentTopic);
+        yelpAsyncSearch();
     }
 
     @Override
@@ -205,11 +206,7 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    private void yelpSearch(String location, String topic) {
-        TextView textView = (TextView) findViewById(R.id.placeName);
-        textView.setText(location);
-        ((TextView) findViewById(R.id.category_text)).setText(mCurrentTopic);
-        progressDialog.show();
+    private ArrayList<Business> yelpSearch(String location, String topic) {
 
         YelpAPIFactory apiFactory = new YelpAPIFactory(consumerKey, consumerSecret, token, tokenSecret);
         YelpAPI yelpAPI = apiFactory.createAPI();
@@ -222,32 +219,55 @@ public class MainActivity extends AppCompatActivity
         params.put("sort", "2");
         params.put("lang", "fr");
 
+
+        ArrayList<Business> businesses = null;
         retrofit.Call<SearchResponse> call = yelpAPI.search(location, params);
-        Callback<SearchResponse> callback = new Callback<SearchResponse>() {
-            @Override
-            public void onResponse(Response<SearchResponse> response, Retrofit retrofit) {
-                SearchResponse searchResponse = response.body();
+        try {
+            Response<SearchResponse> response = call.execute();
+            SearchResponse searchResponse = response.body();
 
-                int totalNumberOfResult = searchResponse.total();
-                ArrayList<Business> businesses = searchResponse.businesses();
+            businesses = searchResponse.businesses();
 
-                Log.d("total results: ", String.valueOf(totalNumberOfResult));
+        } catch (IOException e) {
 
-                createPlaceAdapter(businesses);
-            }
+        }
 
-            @Override
-            public void onFailure(Throwable t) {
-                Log.d("error: ", t.toString());
-            }
-        };
-
-        call.enqueue(callback);
+        return businesses;
 
     }
 
-    private void createPlaceAdapter(ArrayList<Business> businesses) {
-        placeAdapter = new PlaceAdapter(this);
+    private class YelpSearch extends AsyncTask<String, Void, ArrayList<Business>> {
+
+        @Override
+        protected ArrayList<Business> doInBackground(String... params) {
+            return yelpSearch(params[0], params[1]);
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<Business> businesses) {
+            super.onPostExecute(businesses);
+            Log.d("businesses: ", businesses.toString());
+            CreatePlaceAdapter createPlaceAdapter = new CreatePlaceAdapter();
+            createPlaceAdapter.execute(businesses);
+        }
+    }
+
+    private class CreatePlaceAdapter extends AsyncTask<ArrayList<Business>, Void, PlaceAdapter> {
+
+        @Override
+        protected PlaceAdapter doInBackground(ArrayList<Business>... params) {
+            return createPlaceAdapter(params[0]);
+        }
+
+        @Override
+        protected void onPostExecute(PlaceAdapter placeAdapter) {
+            mPlaceAdapter = placeAdapter;
+            createGridView();
+        }
+    }
+
+    private PlaceAdapter createPlaceAdapter(ArrayList<Business> businesses) {
+        PlaceAdapter placeAdapter = new PlaceAdapter(this);
         ArrayList<Bitmap> imageDrawables = new ArrayList<Bitmap>();
         ArrayList<Bitmap> ratingDrawables = new ArrayList<Bitmap>();
 
@@ -267,26 +287,25 @@ public class MainActivity extends AppCompatActivity
         placeAdapter.setPlaceImages(imageDrawables);
         placeAdapter.setPlaceRatings(ratingDrawables);
 
-        createGridView();
-
+        return placeAdapter;
     }
 
     private void createGridView(){
         GridView gridView = (GridView) findViewById(R.id.gridview);
-        gridView.setAdapter(placeAdapter);
+        gridView.setAdapter(mPlaceAdapter);
         progressDialog.hide();
         Log.d("images: ", "all created");
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(MainActivity.this, PlaceActivity.class);
-                intent.putExtra(CURRENT_BUSINESS_NAME, placeAdapter.getBusiness(position).name());
-                intent.putExtra(CURRENT_BUSINESS_ADDRESS, placeAdapter.getBusiness(position).location().displayAddress());
-                intent.putExtra(CURRENT_BUSINESS_IMAGE, placeAdapter.getPlaceImage(position));
-                intent.putExtra(CURRENT_BUSINESS_RATING, placeAdapter.getPlaceRating(position));
-                intent.putExtra(CURRENT_BUSINESS_DISTANCE, placeAdapter.getBusiness(position).distance());
-                intent.putExtra(CURRENT_BUSINESS_LAT, String.valueOf(placeAdapter.getBusiness(position).location().coordinate().latitude()));
-                intent.putExtra(CURRENT_BUSINESS_LON, String.valueOf(placeAdapter.getBusiness(position).location().coordinate().longitude()));
+                intent.putExtra(CURRENT_BUSINESS_NAME, mPlaceAdapter.getBusiness(position).name());
+                intent.putExtra(CURRENT_BUSINESS_ADDRESS, mPlaceAdapter.getBusiness(position).location().displayAddress());
+                intent.putExtra(CURRENT_BUSINESS_IMAGE, mPlaceAdapter.getPlaceImage(position));
+                intent.putExtra(CURRENT_BUSINESS_RATING, mPlaceAdapter.getPlaceRating(position));
+                intent.putExtra(CURRENT_BUSINESS_DISTANCE, mPlaceAdapter.getBusiness(position).distance());
+                intent.putExtra(CURRENT_BUSINESS_LAT, String.valueOf(mPlaceAdapter.getBusiness(position).location().coordinate().latitude()));
+                intent.putExtra(CURRENT_BUSINESS_LON, String.valueOf(mPlaceAdapter.getBusiness(position).location().coordinate().longitude()));
                 startActivity(intent);
             }
         });
@@ -301,8 +320,7 @@ public class MainActivity extends AppCompatActivity
     public boolean onQueryTextSubmit(String query) {
         mCurrentPlace = new String(query);
         searchView.clearFocus();
-        yelpSearch(query, mCurrentTopic);
-
+        yelpAsyncSearch();
         return true;
     }
 
@@ -338,7 +356,18 @@ public class MainActivity extends AppCompatActivity
                 break;
         }
 
-        yelpSearch(mCurrentPlace, mCurrentTopic);
+        yelpAsyncSearch();
         return true;
+    }
+
+    private void yelpAsyncSearch() {
+        TextView textView = (TextView) findViewById(R.id.placeName);
+        textView.setText(mCurrentPlace);
+        ((TextView) findViewById(R.id.category_text)).setText(mCurrentTopic);
+        progressDialog.show();
+
+        String[] params = {mCurrentPlace, mCurrentTopic};
+        YelpSearch yelpSearch = new YelpSearch();
+        yelpSearch.execute(params);
     }
 }
