@@ -185,15 +185,14 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.route) {
-            // Handle the camera action
             Intent intent = new Intent(MainActivity.this, RouteActivity.class);
             startActivity(intent);
         } else if (id == R.id.nav_map) {
             Intent intent = new Intent(MainActivity.this, MapActivity.class);
             startActivity(intent);
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
+        } else if (id == R.id.nav_clear_route) {
+            getSharedPreferences(PREFS_NAME_BUSINESS, PREFS_MODE_BUSINESS).edit().clear().commit();
+        } else if (id == R.id.nav_random_generate) {
 
         } else if (id == R.id.nav_share) {
 

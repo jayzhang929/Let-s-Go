@@ -1,19 +1,20 @@
 package com.example.jayzhang.LetsGo;
 
-import android.content.Intent;
+/**
+ * Modified from
+ * source from http://stackoverflow.com/questions/14710744/how-to-draw-road-directions-between-two-geocodes-in-android-google-map-v2
+ */
+
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
-import android.widget.TextView;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -27,9 +28,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,15 +74,15 @@ public class MapActivity extends AppCompatActivity {
 
             for (Object location : latLonMap.keySet()) {
                 String[] latlon = latLonMap.get(location).toString().split(",");
-                Double lat = Double.parseDouble((latlon[1].split("\\]"))[0]);
-                Double lon = Double.parseDouble((latlon[0].split("\\["))[1]);
+                Double lon = Double.parseDouble((latlon[1].split("\\]"))[0]);
+                Double lat = Double.parseDouble((latlon[0].split("\\["))[1]);
 
                 LatLng currentDestination = new LatLng(lat, lon);
                 markerPoints.add(currentDestination);
 
                 MarkerOptions optionDestination = new MarkerOptions()
                                                   .position(currentDestination)
-                                                  .title((String) location).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                        .title((String) location).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
                 googleMap.addMarker(optionDestination);
 
                 LatLng origin = markerPoints.get(markerPointIndex);

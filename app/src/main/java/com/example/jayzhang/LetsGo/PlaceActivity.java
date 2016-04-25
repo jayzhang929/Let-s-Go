@@ -26,6 +26,8 @@ import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -67,9 +69,12 @@ public class PlaceActivity extends AppCompatActivity {
                 mCurrentBusinessLatLon = new ArrayList<String>();
                 mCurrentBusinessLatLon.add(lat);
                 mCurrentBusinessLatLon.add(lon);
+                LinkedHashSet<String> hashSet = new LinkedHashSet<String>();
+                hashSet.add(lat);
+                hashSet.add(lon);
 
                 MainActivity.selectedBusinesses = getSharedPreferences(MainActivity.PREFS_NAME_BUSINESS, MainActivity.PREFS_MODE_BUSINESS).edit();
-                MainActivity.selectedBusinesses.putStringSet(curBusinessName, new HashSet<String>(mCurrentBusinessLatLon));
+                MainActivity.selectedBusinesses.putStringSet(curBusinessName, hashSet);
                 MainActivity.selectedBusinesses.commit();
                 Toast.makeText(PlaceActivity.this, curBusinessName + " has been saved to your route!", Toast.LENGTH_LONG).show();
             }
@@ -103,7 +108,7 @@ public class PlaceActivity extends AppCompatActivity {
     }
 
     private void setDistanceTableRow(String name, String latLon) {
-        
+
     }
 
 }
