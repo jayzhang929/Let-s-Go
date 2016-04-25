@@ -15,6 +15,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -67,7 +68,7 @@ public class MapActivity extends AppCompatActivity {
             MarkerOptions optionLoc = new MarkerOptions().position(loc).title("Current Location")
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
             googleMap.addMarker(optionLoc);
-            // googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(loc, 17));
+            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(loc, 11));
 
             Map latLonMap = allDestinations.getAll();
             int markerPointIndex = 0;
@@ -76,6 +77,14 @@ public class MapActivity extends AppCompatActivity {
                 String[] latlon = latLonMap.get(location).toString().split(",");
                 Double lon = Double.parseDouble((latlon[1].split("\\]"))[0]);
                 Double lat = Double.parseDouble((latlon[0].split("\\["))[1]);
+                // Log.d("Lat Lon: ", String.valueOf(lat) + " " + String.valueOf(lon));
+
+                // double check for correct lat and lon
+                if (lat < lon) {
+                    Double temp = lat;
+                    lat = lon;
+                    lon = temp;
+                }
 
                 LatLng currentDestination = new LatLng(lat, lon);
                 markerPoints.add(currentDestination);
