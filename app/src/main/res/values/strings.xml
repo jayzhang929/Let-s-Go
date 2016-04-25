@@ -8,4 +8,5 @@
     <string name="action_select">Select</string>
     <string name="title_activity_place">PlaceActivity</string>
     <string name="title_activity_route">RouteActivity</string>
+    <string name="title_activity_map">MapActivity</string>
 </resources>

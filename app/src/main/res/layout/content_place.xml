@@ -97,4 +97,9 @@
         </LinearLayout>
     </LinearLayout>
 
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/distance_table"></TableLayout>
+
 </RelativeLayout>

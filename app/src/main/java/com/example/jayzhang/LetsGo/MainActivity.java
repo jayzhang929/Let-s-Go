@@ -57,6 +57,8 @@ public class MainActivity extends AppCompatActivity
     public final static String CURRENT_BUSINESS_NAME = "com.example.jayzhang.LetsGo.BUSINESS_NAME";
     public final static String CURRENT_BUSINESS_RATING = "com.example.jayzhang.LetsGo.BUSINESS_RATING";
     public final static String CURRENT_BUSINESS_DISTANCE = "com.example.jayzhang.LetsGo.BUSINESS_DISTANCE";
+    public final static String CURRENT_BUSINESS_LAT = "com.example.jayzhang.LetsGo.BUSINESS_LAT";
+    public final static String CURRENT_BUSINESS_LON = "com.example.jayzhang.LetsGo.BUSINESS_LON";
     static final String CURRENT_PLACE = "currentPlace";
     static final String CURRENT_TOPIC = "currentTopic";
     public final String PREFS_NAME = "SharedPrefs";
@@ -83,18 +85,6 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Random rn = new Random();
-                if (rn.nextInt(1 - 0 + 1) + 0 == 1) {
-                    Toast.makeText(MainActivity.this, "Thumbs Up", Toast.LENGTH_LONG).show();
-                } else
-                    Toast.makeText(MainActivity.this, "Thumbs Down", Toast.LENGTH_LONG).show();
-            }
-        });
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -198,9 +188,9 @@ public class MainActivity extends AppCompatActivity
             // Handle the camera action
             Intent intent = new Intent(MainActivity.this, RouteActivity.class);
             startActivity(intent);
-            return false;
-        } else if (id == R.id.nav_gallery) {
-
+        } else if (id == R.id.nav_map) {
+            Intent intent = new Intent(MainActivity.this, MapActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_slideshow) {
 
         } else if (id == R.id.nav_manage) {
@@ -296,6 +286,8 @@ public class MainActivity extends AppCompatActivity
                 intent.putExtra(CURRENT_BUSINESS_IMAGE, placeAdapter.getPlaceImage(position));
                 intent.putExtra(CURRENT_BUSINESS_RATING, placeAdapter.getPlaceRating(position));
                 intent.putExtra(CURRENT_BUSINESS_DISTANCE, placeAdapter.getBusiness(position).distance());
+                intent.putExtra(CURRENT_BUSINESS_LAT, String.valueOf(placeAdapter.getBusiness(position).location().coordinate().latitude()));
+                intent.putExtra(CURRENT_BUSINESS_LON, String.valueOf(placeAdapter.getBusiness(position).location().coordinate().longitude()));
                 startActivity(intent);
             }
         });

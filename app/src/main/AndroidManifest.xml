@@ -3,6 +3,11 @@
     package="com.example.jayzhang.LetsGo">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="com.example.googlemaps.permission.MAPS_RECEIVE" />
+
+    <permission
+        android:name="com.example.googlemaps.permission.MAPS_RECIEVE"
+        android:protectionLevel="signature" />
 
     <application
         android:allowBackup="true"
@@ -43,6 +48,35 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.jayzhang.LetsGo.MainActivity" />
+        </activity>
+
+        <meta-data
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="AIzaSyAaDoRkFi9mTbU4dBAARo6znUwYxvP3Oxs" />
+
+        <activity
+            android:name=".MapActivity"
+            android:label="@string/title_activity_map"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.jayzhang.LetsGo.MainActivity" />
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!--
+                  ATTENTION: This data URL was auto-generated. We recommend that you use the HTTP scheme.
+                  TODO: Change the host or pathPrefix as necessary.
+                -->
+                <data
+                    android:host="LetsGo.jayzhang.example.com"
+                    android:pathPrefix="/map"
+                    android:scheme="http" />
+            </intent-filter>
         </activity>
     </application>
 
