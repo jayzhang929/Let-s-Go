@@ -76,7 +76,7 @@ public class PlaceActivity extends AppCompatActivity {
                 MainActivity.selectedBusinesses = getSharedPreferences(MainActivity.PREFS_NAME_BUSINESS, MainActivity.PREFS_MODE_BUSINESS).edit();
                 MainActivity.selectedBusinesses.putStringSet(curBusinessName, hashSet);
                 MainActivity.selectedBusinesses.commit();
-                Toast.makeText(PlaceActivity.this, curBusinessName + " has been saved to your route!", Toast.LENGTH_LONG).show();
+                Toast.makeText(PlaceActivity.this, curBusinessName + " has been saved to your route!", Toast.LENGTH_SHORT).show();
             }
         });
     }

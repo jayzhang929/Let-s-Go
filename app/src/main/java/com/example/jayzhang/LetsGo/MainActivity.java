@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -79,6 +80,9 @@ public class MainActivity extends AppCompatActivity
     private String mCurrentTopic;
     private SharedPreferences.Editor editor;
     public static SharedPreferences.Editor selectedBusinesses;
+    private String mRandomPlace;
+    private ArrayList<Business> mRandomRestaurants;
+    private ArrayList<Business> mRandomOutdoors;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -194,7 +198,9 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_clear_route) {
             getSharedPreferences(PREFS_NAME_BUSINESS, PREFS_MODE_BUSINESS).edit().clear().commit();
         } else if (id == R.id.nav_random_generate) {
-
+            BusinessesRandomGenerator businessesRandomGenerator = new BusinessesRandomGenerator();
+            String[] params = {mCurrentPlace, null};
+            businessesRandomGenerator.execute(params);
         } else if (id == R.id.nav_share) {
 
         } else if (id == R.id.nav_send) {
@@ -213,10 +219,12 @@ public class MainActivity extends AppCompatActivity
 
         Map<String, String> params = new HashMap<>();
 
-        params.put("term", topic);
+        if (topic != null) {
+            params.put("term", topic);
+            params.put("sort", "2");
+        }
         // params.put("category-filter", "hiking");
-        // params.put("limit", "20");
-        params.put("sort", "2");
+        params.put("limit", "20");
         params.put("lang", "fr");
 
 
@@ -236,6 +244,73 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    private class BusinessesRandomGenerator extends AsyncTask<String, Void, ArrayList<Business>> {
+
+        @Override
+        protected ArrayList<Business> doInBackground(String... params) {
+            return yelpSearch(params[0], params[1]);
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<Business> businesses) {
+            mRandomPlace = mCurrentPlace;
+            mRandomRestaurants = new ArrayList<>();
+            mRandomOutdoors = new ArrayList<>();
+
+            for (Business business : businesses) {
+                Log.d("category: ", business.categories().toString());
+                if (business.categories().contains("coffee") || business.categories().contains("pizza") || business.categories().contains("delis"))
+                    mRandomRestaurants.add(business);
+                else
+                    mRandomOutdoors.add(business);
+            }
+
+            // clear current route first
+            getSharedPreferences(PREFS_NAME_BUSINESS, PREFS_MODE_BUSINESS).edit().clear().commit();
+
+            if (mRandomOutdoors.size() > 0) {
+                int random = randomNumber(mRandomOutdoors.size());
+                Log.d("outdoor size: ", String.valueOf(mRandomOutdoors.size()));
+                Log.d("random: ", String.valueOf(random));
+                Business curRandomOutdoor = mRandomOutdoors.get(random);
+                addBusinessToSelectedBusinesses(curRandomOutdoor);
+            }
+
+            if (mRandomRestaurants.size() > 0) {
+                int random = randomNumber(mRandomRestaurants.size());
+                Business curRandomRestaurant = mRandomRestaurants.get(random);
+                addBusinessToSelectedBusinesses(curRandomRestaurant);
+            }
+
+            if (mRandomOutdoors.size() > 1) {
+                int random = randomNumber(mRandomOutdoors.size());
+                Business curRandomOutdoor = mRandomOutdoors.get(random);
+                addBusinessToSelectedBusinesses(curRandomOutdoor);
+            }
+
+            Intent intent = new Intent(MainActivity.this, MapActivity.class);
+            startActivity(intent);
+        }
+    }
+
+    private void addBusinessToSelectedBusinesses (Business business) {
+        String name = business.name();
+        String lat = String.valueOf(business.location().coordinate().latitude());
+        String lon = String.valueOf(business.location().coordinate().longitude());
+        LinkedHashSet<String> hashSet = new LinkedHashSet<String>();
+        hashSet.add(lat);
+        hashSet.add(lon);
+
+        MainActivity.selectedBusinesses = getSharedPreferences(MainActivity.PREFS_NAME_BUSINESS, MainActivity.PREFS_MODE_BUSINESS).edit();
+        MainActivity.selectedBusinesses.putStringSet(name, hashSet);
+        MainActivity.selectedBusinesses.commit();
+    }
+
+    private int randomNumber (int max) {
+        Random random = new Random();
+        return random.nextInt(max);
+    }
+
     private class YelpSearch extends AsyncTask<String, Void, ArrayList<Business>> {
 
         @Override
@@ -246,7 +321,7 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected void onPostExecute(ArrayList<Business> businesses) {
             super.onPostExecute(businesses);
-            Log.d("businesses: ", businesses.toString());
+            // Log.d("businesses: ", businesses.toString());
             CreatePlaceAdapter createPlaceAdapter = new CreatePlaceAdapter();
             createPlaceAdapter.execute(businesses);
         }
