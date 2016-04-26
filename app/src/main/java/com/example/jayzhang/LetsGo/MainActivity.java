@@ -6,11 +6,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.StrictMode;
-import android.support.design.widget.FloatingActionButton;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -21,35 +19,25 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.PopupMenu;
 import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.SearchView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.google.android.gms.location.places.Place;
-import com.squareup.okhttp.Route;
 import com.yelp.clientlib.connection.YelpAPI;
 import com.yelp.clientlib.connection.YelpAPIFactory;
 import com.yelp.clientlib.entities.Business;
 import com.yelp.clientlib.entities.SearchResponse;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
-
-import retrofit.Callback;
 import retrofit.Response;
-import retrofit.Retrofit;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener, OnMenuItemClickListener {
@@ -74,7 +62,7 @@ public class MainActivity extends AppCompatActivity
     private final static String tokenSecret = "ZUZ88amNmp25m_-5oyqY6iTfyzU";
 
     private SearchView searchView;
-    private ProgressDialog progressDialog;
+    private ProgressDialog mProgressDialog;
     private PlaceAdapter mPlaceAdapter;
     private String mCurrentPlace;
     private String mCurrentTopic;
@@ -100,9 +88,9 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        progressDialog = new ProgressDialog(this);
-        progressDialog.setTitle("Loading");
-        progressDialog.setMessage("Wait while Let's Go find your destination :)");
+        mProgressDialog = new ProgressDialog(this);
+        mProgressDialog.setTitle("Loading");
+        mProgressDialog.setMessage("Wait while Let's Go find your destination :)");
 
         mCurrentPlace = "College Park, MD";
         mCurrentTopic = "parks";
@@ -212,36 +200,87 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    private ArrayList<Business> yelpSearch(String location, String topic) {
-
-        YelpAPIFactory apiFactory = new YelpAPIFactory(consumerKey, consumerSecret, token, tokenSecret);
-        YelpAPI yelpAPI = apiFactory.createAPI();
-
-        Map<String, String> params = new HashMap<>();
-
-        if (topic != null) {
-            params.put("term", topic);
-            params.put("sort", "2");
-        }
-        // params.put("category-filter", "hiking");
-        params.put("limit", "20");
-        params.put("lang", "fr");
-
-
-        ArrayList<Business> businesses = null;
-        retrofit.Call<SearchResponse> call = yelpAPI.search(location, params);
-        try {
-            Response<SearchResponse> response = call.execute();
-            SearchResponse searchResponse = response.body();
-
-            businesses = searchResponse.businesses();
-
-        } catch (IOException e) {
-
+    @Override
+    public boolean onMenuItemClick(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menuFestival:
+                mCurrentTopic = "festival";
+                break;
+            case R.id.menuHiking:
+                mCurrentTopic = "hiking";
+                break;
+            case R.id.menuMuseums:
+                mCurrentTopic = "museums";
+                break;
+            case R.id.menuParks:
+                mCurrentTopic = "parks";
+                break;
+            case R.id.menuRestaurants:
+                mCurrentTopic = "restaurants";
+                break;
         }
 
-        return businesses;
+        yelpAsyncSearch();
+        return true;
+    }
 
+    private void yelpAsyncSearch() {
+        TextView textView = (TextView) findViewById(R.id.placeName);
+        textView.setText(mCurrentPlace);
+        ((TextView) findViewById(R.id.category_text)).setText(mCurrentTopic);
+        mProgressDialog.show();
+
+        String[] params = {mCurrentPlace, mCurrentTopic};
+        YelpSearch yelpSearch = new YelpSearch();
+        yelpSearch.execute(params);
+    }
+
+    private void addBusinessToSelectedBusinesses (Business business) {
+        String name = business.name();
+        String lat = String.valueOf(business.location().coordinate().latitude());
+        String lon = String.valueOf(business.location().coordinate().longitude());
+        LinkedHashSet<String> hashSet = new LinkedHashSet<String>();
+        hashSet.add(lat);
+        hashSet.add(lon);
+
+        MainActivity.selectedBusinesses = getSharedPreferences(MainActivity.PREFS_NAME_BUSINESS, MainActivity.PREFS_MODE_BUSINESS).edit();
+        MainActivity.selectedBusinesses.putStringSet(name, hashSet);
+        MainActivity.selectedBusinesses.commit();
+    }
+
+    private int randomNumber (int max) {
+        Random random = new Random();
+        return random.nextInt(max);
+    }
+
+    private class YelpSearch extends AsyncTask<String, Void, ArrayList<Business>> {
+
+        @Override
+        protected ArrayList<Business> doInBackground(String... params) {
+            return yelpSearch(params[0], params[1]);
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<Business> businesses) {
+            super.onPostExecute(businesses);
+            // Log.d("businesses: ", businesses.toString());
+            CreatePlaceAdapter createPlaceAdapter = new CreatePlaceAdapter();
+            createPlaceAdapter.execute(businesses);
+        }
+    }
+
+    private class CreatePlaceAdapter extends AsyncTask<ArrayList<Business>, Void, PlaceAdapter> {
+
+        @Override
+        protected PlaceAdapter doInBackground(ArrayList<Business>... params) {
+            return createPlaceAdapter(params[0]);
+        }
+
+        @Override
+        protected void onPostExecute(PlaceAdapter placeAdapter) {
+            mPlaceAdapter = placeAdapter;
+            createGridView();
+        }
     }
 
     private class BusinessesRandomGenerator extends AsyncTask<String, Void, ArrayList<Business>> {
@@ -293,61 +332,42 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void addBusinessToSelectedBusinesses (Business business) {
-        String name = business.name();
-        String lat = String.valueOf(business.location().coordinate().latitude());
-        String lon = String.valueOf(business.location().coordinate().longitude());
-        LinkedHashSet<String> hashSet = new LinkedHashSet<String>();
-        hashSet.add(lat);
-        hashSet.add(lon);
+    private ArrayList<Business> yelpSearch(String location, String topic) {
 
-        MainActivity.selectedBusinesses = getSharedPreferences(MainActivity.PREFS_NAME_BUSINESS, MainActivity.PREFS_MODE_BUSINESS).edit();
-        MainActivity.selectedBusinesses.putStringSet(name, hashSet);
-        MainActivity.selectedBusinesses.commit();
-    }
+        YelpAPIFactory apiFactory = new YelpAPIFactory(consumerKey, consumerSecret, token, tokenSecret);
+        YelpAPI yelpAPI = apiFactory.createAPI();
 
-    private int randomNumber (int max) {
-        Random random = new Random();
-        return random.nextInt(max);
-    }
+        Map<String, String> params = new HashMap<>();
 
-    private class YelpSearch extends AsyncTask<String, Void, ArrayList<Business>> {
+        if (topic != null) {
+            params.put("term", topic);
+            params.put("sort", "2");
+        }
+        // params.put("category-filter", "hiking");
+        params.put("limit", "20");
+        params.put("lang", "fr");
 
-        @Override
-        protected ArrayList<Business> doInBackground(String... params) {
-            return yelpSearch(params[0], params[1]);
+
+        ArrayList<Business> businesses = null;
+        retrofit.Call<SearchResponse> call = yelpAPI.search(location, params);
+        try {
+            Response<SearchResponse> response = call.execute();
+            SearchResponse searchResponse = response.body();
+
+            businesses = searchResponse.businesses();
+
+        } catch (IOException e) {
+
         }
 
-        @Override
-        protected void onPostExecute(ArrayList<Business> businesses) {
-            super.onPostExecute(businesses);
-            // Log.d("businesses: ", businesses.toString());
-            CreatePlaceAdapter createPlaceAdapter = new CreatePlaceAdapter();
-            createPlaceAdapter.execute(businesses);
-        }
-    }
+        return businesses;
 
-    private class CreatePlaceAdapter extends AsyncTask<ArrayList<Business>, Void, PlaceAdapter> {
-
-        @Override
-        protected PlaceAdapter doInBackground(ArrayList<Business>... params) {
-            return createPlaceAdapter(params[0]);
-        }
-
-        @Override
-        protected void onPostExecute(PlaceAdapter placeAdapter) {
-            mPlaceAdapter = placeAdapter;
-            createGridView();
-        }
     }
 
     private PlaceAdapter createPlaceAdapter(ArrayList<Business> businesses) {
         PlaceAdapter placeAdapter = new PlaceAdapter(this);
         ArrayList<Bitmap> imageDrawables = new ArrayList<Bitmap>();
         ArrayList<Bitmap> ratingDrawables = new ArrayList<Bitmap>();
-
-        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-        StrictMode.setThreadPolicy(policy);
 
         try {
             for (Business b : businesses) {
@@ -368,7 +388,7 @@ public class MainActivity extends AppCompatActivity
     private void createGridView(){
         GridView gridView = (GridView) findViewById(R.id.gridview);
         gridView.setAdapter(mPlaceAdapter);
-        progressDialog.hide();
+        mProgressDialog.hide();
         Log.d("images: ", "all created");
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -409,40 +429,5 @@ public class MainActivity extends AppCompatActivity
         popupMenu.setOnMenuItemClickListener(this);
         popupMenu.inflate(R.menu.category_menu);
         popupMenu.show();
-    }
-
-    @Override
-    public boolean onMenuItemClick(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.menuFestival:
-                mCurrentTopic = "festival";
-                break;
-            case R.id.menuHiking:
-                mCurrentTopic = "hiking";
-                break;
-            case R.id.menuMuseums:
-                mCurrentTopic = "museums";
-                break;
-            case R.id.menuParks:
-                mCurrentTopic = "parks";
-                break;
-            case R.id.menuRestaurants:
-                mCurrentTopic = "restaurants";
-                break;
-        }
-
-        yelpAsyncSearch();
-        return true;
-    }
-
-    private void yelpAsyncSearch() {
-        TextView textView = (TextView) findViewById(R.id.placeName);
-        textView.setText(mCurrentPlace);
-        ((TextView) findViewById(R.id.category_text)).setText(mCurrentTopic);
-        progressDialog.show();
-
-        String[] params = {mCurrentPlace, mCurrentTopic};
-        YelpSearch yelpSearch = new YelpSearch();
-        yelpSearch.execute(params);
     }
 }

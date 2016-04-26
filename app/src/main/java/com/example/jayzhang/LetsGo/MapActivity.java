@@ -13,6 +13,8 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
@@ -67,7 +69,7 @@ public class MapActivity extends AppCompatActivity {
             // add marker
             final LatLng loc = new LatLng(38.9851198, -76.9451202);
             markerPoints.add(loc);
-            MarkerOptions optionLoc = new MarkerOptions().position(loc).title("Current Location")
+            MarkerOptions optionLoc = new MarkerOptions().position(loc).title("Current Location").snippet("home")
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
             googleMap.addMarker(optionLoc);
             googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(loc, 11));
@@ -93,7 +95,8 @@ public class MapActivity extends AppCompatActivity {
 
                 MarkerOptions optionDestination = new MarkerOptions()
                                                   .position(currentDestination)
-                        .title((String) location).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                                                  .title((String) location)
+                                                  .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
                 googleMap.addMarker(optionDestination);
 
                 LatLng origin = markerPoints.get(markerPointIndex);
@@ -113,6 +116,18 @@ public class MapActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu (Menu menu) {
+        getMenuInflater().inflate(R.menu.map, menu);
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected (MenuItem menuItem) {
+        return super.onOptionsItemSelected(menuItem);
     }
 
     private String getDirectionsUrl(LatLng origin,LatLng dest){
