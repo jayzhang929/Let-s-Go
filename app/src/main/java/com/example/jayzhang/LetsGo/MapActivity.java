@@ -25,6 +25,8 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.yelp.clientlib.entities.Business;
+
 import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -34,8 +36,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class MapActivity extends AppCompatActivity {
 
@@ -61,6 +65,35 @@ public class MapActivity extends AppCompatActivity {
         });
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        HashMap<String, LinkedHashSet<String>> randomRestaurants = (HashMap<String, LinkedHashSet<String>>) getIntent().getSerializableExtra(MainActivity.RANDOM_RESTAURANTS);
+        HashMap<String, LinkedHashSet<String>> randomOutdoors = (HashMap<String, LinkedHashSet<String>>) getIntent().getSerializableExtra(MainActivity.RANDOM_OUTDOORS);
+
+        if (randomRestaurants != null || randomOutdoors != null) {
+            Log.d("randomgenerator: ", "success");
+            if (randomOutdoors.size() > 0) {
+                int random = randomNumber(randomOutdoors.size());
+                Log.d("outdoor size: ", String.valueOf(randomOutdoors.size()));
+                Log.d("random: ", String.valueOf(random));
+                String name = findBusinessName(randomOutdoors, random);
+                Log.d("outdoor1 name: ", name);
+                allDestinations.edit().putStringSet(name, randomOutdoors.get(name)).commit();
+            }
+
+            if (randomRestaurants.size() > 0) {
+                int random = randomNumber(randomRestaurants.size());
+                String name = findBusinessName(randomRestaurants, random);
+                Log.d("restaurant name: ", name);
+                allDestinations.edit().putStringSet(name, randomRestaurants.get(name)).commit();
+            }
+
+            if (randomOutdoors.size() > 1) {
+                int random = randomNumber(randomOutdoors.size());
+                String name = findBusinessName(randomOutdoors, random);
+                Log.d("outdoor2 name: ", name);
+                allDestinations.edit().putStringSet(name, randomOutdoors.get(name)).commit();
+            }
+        }
+
         try {
             if (googleMap == null)
                 googleMap = ((MapFragment)getFragmentManager().findFragmentById(R.id.map)).getMap();
@@ -76,8 +109,9 @@ public class MapActivity extends AppCompatActivity {
 
             Map latLonMap = allDestinations.getAll();
             int markerPointIndex = 0;
-
+            Log.d("latLonMap Size: ", String.valueOf(latLonMap.size()));
             for (Object location : latLonMap.keySet()) {
+                Log.d("location: ", (String) location);
                 String[] latlon = latLonMap.get(location).toString().split(",");
                 Double lon = Double.parseDouble((latlon[1].split("\\]"))[0]);
                 Double lat = Double.parseDouble((latlon[0].split("\\["))[1]);
@@ -281,6 +315,23 @@ public class MapActivity extends AppCompatActivity {
             // Drawing polyline in the Google Map for the i-th route
             googleMap.addPolyline(lineOptions);
         }
+    }
+
+    private int randomNumber (int max) {
+        Random random = new Random();
+        return random.nextInt(max);
+    }
+
+    private String findBusinessName (HashMap<String, LinkedHashSet<String>> hashMap, int index) {
+        String name = null;
+        for (String key : hashMap.keySet()) {
+            if (index >= 0) {
+                name = key;
+                index --;
+            } else
+                break;
+        }
+        return name;
     }
 
 }
