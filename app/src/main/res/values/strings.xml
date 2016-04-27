@@ -9,4 +9,11 @@
     <string name="title_activity_place">PlaceActivity</string>
     <string name="title_activity_route">RouteActivity</string>
     <string name="title_activity_map">MapActivity</string>
+    <string-array name="category_array">
+        <item>Hiking</item>
+        <item>Museums</item>
+        <item>Parks</item>
+        <item>Restaurants</item>
+        <item>Festival</item>
+    </string-array>
 </resources>

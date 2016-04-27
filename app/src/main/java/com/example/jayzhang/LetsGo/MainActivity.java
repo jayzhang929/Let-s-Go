@@ -1,5 +1,7 @@
 package com.example.jayzhang.LetsGo;
 
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
@@ -8,7 +10,6 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -20,10 +21,10 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.GridView;
-import android.widget.PopupMenu;
-import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.SearchView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.yelp.clientlib.connection.YelpAPI;
@@ -40,7 +41,7 @@ import java.util.Random;
 import retrofit.Response;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener, OnMenuItemClickListener {
+        implements NavigationView.OnNavigationItemSelectedListener, SearchView.OnQueryTextListener, SearchView.OnCloseListener, AdapterView.OnItemSelectedListener {
 
     public final static String CURRENT_BUSINESS_ADDRESS = "com.example.jayzhang.LetsGo.BUSINESS_ADDRESS";
     public final static String CURRENT_BUSINESS_IMAGE = "com.example.jayzhang.LetsGo.BUSINESS_IMAGE";
@@ -61,6 +62,7 @@ public class MainActivity extends AppCompatActivity
     private final static String token = "veqUNoadchDOaDdbHd_gUhfJXJX1r9GO";
     private final static String tokenSecret = "ZUZ88amNmp25m_-5oyqY6iTfyzU";
 
+    private RetainedFragment mRetainedFragment;
     private SearchView searchView;
     private ProgressDialog mProgressDialog;
     private PlaceAdapter mPlaceAdapter;
@@ -71,6 +73,8 @@ public class MainActivity extends AppCompatActivity
     private String mRandomPlace;
     private ArrayList<Business> mRandomRestaurants;
     private ArrayList<Business> mRandomOutdoors;
+    private Spinner mSpinner;
+    private int callOnItemSelected;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +91,12 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        mSpinner = (Spinner) findViewById(R.id.category_spinner);
+        ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(this, R.array.category_array, android.R.layout.simple_spinner_dropdown_item);
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mSpinner.setAdapter(spinnerAdapter);
+        mSpinner.setOnItemSelectedListener(this);
 
         mProgressDialog = new ProgressDialog(this);
         mProgressDialog.setTitle("Loading");
@@ -109,11 +119,24 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onResume() {
         super.onResume();
-        Log.d("selectedBusiness: ", getSharedPreferences(PREFS_NAME_BUSINESS, PREFS_MODE_BUSINESS).getAll().toString());
 
         SharedPreferences sharedPreferences = getSharedPreferences(PREFS_NAME, PREFS_MODE);
         mCurrentPlace = sharedPreferences.getString(CURRENT_PLACE, "College Park, MD");
         mCurrentTopic = sharedPreferences.getString(CURRENT_TOPIC, "parks");
+
+        callOnItemSelected = 0;
+        mSpinner.setSelection(findIndexInCategoryArray(mCurrentTopic));
+
+        // check whether retainedFragment exist
+        FragmentManager fragmentManager = getFragmentManager();
+        mRetainedFragment = (RetainedFragment) fragmentManager.findFragmentByTag("data");
+        if (mRetainedFragment == null) {
+            mRetainedFragment = new RetainedFragment();
+            fragmentManager.beginTransaction().add(mRetainedFragment, "data").commit();
+            mRetainedFragment.setName("Hello World");
+        }
+
+        Log.d("mRetainedFragment: ", mRetainedFragment.getName());
 
         yelpAsyncSearch();
     }
@@ -128,6 +151,8 @@ public class MainActivity extends AppCompatActivity
         editor.putString(CURRENT_TOPIC, mCurrentTopic);
 
         editor.commit();
+
+        mRetainedFragment.setName("Hi World");
     }
 
     @Override
@@ -201,33 +226,24 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public boolean onMenuItemClick(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.menuFestival:
-                mCurrentTopic = "festival";
-                break;
-            case R.id.menuHiking:
-                mCurrentTopic = "hiking";
-                break;
-            case R.id.menuMuseums:
-                mCurrentTopic = "museums";
-                break;
-            case R.id.menuParks:
-                mCurrentTopic = "parks";
-                break;
-            case R.id.menuRestaurants:
-                mCurrentTopic = "restaurants";
-                break;
-        }
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        if (callOnItemSelected > 0) {
+            mCurrentTopic = parent.getItemAtPosition(position).toString();
 
-        yelpAsyncSearch();
-        return true;
+            Log.d("mCurrentTopic: ", mCurrentTopic);
+            yelpAsyncSearch();
+        }
+        callOnItemSelected++;
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
     }
 
     private void yelpAsyncSearch() {
         TextView textView = (TextView) findViewById(R.id.placeName);
         textView.setText(mCurrentPlace);
-        ((TextView) findViewById(R.id.category_text)).setText(mCurrentTopic);
         mProgressDialog.show();
 
         String[] params = {mCurrentPlace, mCurrentTopic};
@@ -424,10 +440,22 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    public void onCategoriesClick(View view) {
-        PopupMenu popupMenu = new PopupMenu(this, view);
-        popupMenu.setOnMenuItemClickListener(this);
-        popupMenu.inflate(R.menu.category_menu);
-        popupMenu.show();
+    private int findIndexInCategoryArray(String category) {
+        int index = 0;
+        switch (category) {
+            case "Museums":
+                index = 1;
+                break;
+            case "Parks":
+                index = 2;
+                break;
+            case "Restaurants":
+                index = 3;
+                break;
+            case "Festival":
+                index = 4;
+                break;
+        }
+        return index;
     }
 }

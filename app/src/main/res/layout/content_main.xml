@@ -14,24 +14,11 @@
         android:gravity="center_horizontal"
         android:id="@+id/placeName"
         android:textSize="25dp"/>
-    <LinearLayout
-        android:layout_width="match_parent"
+
+    <Spinner
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingLeft="10dp"
-            android:text="Categories"
-            android:onClick="onCategoriesClick"/>
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="right"
-            android:paddingRight="10dp"
-            android:id="@+id/category_text"
-            android:textSize="18dp"/>
-    </LinearLayout>
+        android:id="@+id/category_spinner"></Spinner>
 
     <RelativeLayout
         android:layout_height="wrap_content"
