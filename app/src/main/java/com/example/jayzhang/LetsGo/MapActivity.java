@@ -5,11 +5,17 @@ package com.example.jayzhang.LetsGo;
  * source from http://stackoverflow.com/questions/14710744/how-to-draw-road-directions-between-two-geocodes-in-android-google-map-v2
  */
 
+import android.*;
+import android.Manifest;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -18,6 +24,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -41,7 +50,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class MapActivity extends AppCompatActivity {
+public class MapActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+
+    private static int LOCATION_PERMISSION = 1;
 
     private GoogleMap googleMap;
     ArrayList<LatLng> markerPoints = new ArrayList<LatLng>();
@@ -49,6 +60,11 @@ public class MapActivity extends AppCompatActivity {
     HashMap<String, LinkedHashSet<String>> mRandomRestaurants;
     HashMap<String, LinkedHashSet<String>> mRandomParks;
     HashMap<String, LinkedHashSet<String>> mRandomMuseums;
+    private GoogleApiClient mGoogleApiClient;
+    private Location mLastLocation;
+    private Double defaultLat = 38.9851198;
+    private Double defaultLon = -76.9451202;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +91,20 @@ public class MapActivity extends AppCompatActivity {
         if (mRandomRestaurants != null || mRandomParks != null || mRandomMuseums != null)
             populateAllDestination(mRandomMuseums, mRandomRestaurants, mRandomParks);
 
-        drawMarkersMap();
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                                .addConnectionCallbacks(this)
+                                .addOnConnectionFailedListener(this)
+                                .addApi(LocationServices.API)
+                                .build();
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION);
+        else
+            mGoogleApiClient.connect();
+
+        // drawMarkersMap();
 
     }
 
@@ -93,11 +122,46 @@ public class MapActivity extends AppCompatActivity {
             if (mRandomRestaurants != null || mRandomParks != null || mRandomMuseums != null)
                 populateAllDestination(mRandomMuseums, mRandomRestaurants, mRandomParks);
 
-            drawMarkersMap();
+            if (mLastLocation == null)
+                drawMarkersMap(defaultLat, defaultLon);
+            else
+                drawMarkersMap(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+
             return true;
         }
 
         return super.onOptionsItemSelected(menuItem);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        if (requestCode == LOCATION_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                mGoogleApiClient.connect();
+        } else {
+            drawMarkersMap(defaultLat, defaultLon);
+        }
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if (mLastLocation != null) {
+            drawMarkersMap(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+        } else
+            drawMarkersMap(defaultLat, defaultLon);
+
+        mGoogleApiClient.disconnect();
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+
     }
 
     private void populateAllDestination (HashMap<String, LinkedHashSet<String>> randomMuseums,
@@ -123,7 +187,7 @@ public class MapActivity extends AppCompatActivity {
             }
     }
 
-    private void drawMarkersMap () {
+    private void drawMarkersMap (Double startingLat, Double startingLon) {
         try {
             if (googleMap == null)
                 googleMap = ((MapFragment)getFragmentManager().findFragmentById(R.id.map)).getMap();
@@ -133,7 +197,8 @@ public class MapActivity extends AppCompatActivity {
             googleMap.clear();
 
             // add marker
-            final LatLng loc = new LatLng(38.9851198, -76.9451202);
+            // final LatLng loc = new LatLng(38.9851198, -76.9451202);
+            final LatLng loc = new LatLng(startingLat, startingLon);
             markerPoints.add(loc);
             MarkerOptions optionLoc = new MarkerOptions().position(loc).title("Current Location").snippet("home")
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
