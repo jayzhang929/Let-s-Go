@@ -33,6 +33,7 @@ import com.yelp.clientlib.entities.Business;
 import com.yelp.clientlib.entities.SearchResponse;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -50,6 +51,9 @@ public class MainActivity extends AppCompatActivity
     public final static String CURRENT_BUSINESS_DISTANCE = "com.example.jayzhang.LetsGo.BUSINESS_DISTANCE";
     public final static String CURRENT_BUSINESS_LAT = "com.example.jayzhang.LetsGo.BUSINESS_LAT";
     public final static String CURRENT_BUSINESS_LON = "com.example.jayzhang.LetsGo.BUSINESS_LON";
+    public final static String RANDOM_RESTAURANTS = "com.example.jayzhang.LetsGo.RANDOM_RESTAURANTS";
+    public final static String RANDOM_PARKS = "com.example.jayzhang.LetsGo.RANDOM_PARKS";
+    public final static String RANDOM_MUSEUMS = "com.example.jayzhang.LetsGo.RANDOM_MUSEUMS";
     static final String CURRENT_PLACE = "currentPlace";
     static final String CURRENT_TOPIC = "currentTopic";
     public final String PREFS_NAME = "SharedPrefs";
@@ -70,9 +74,9 @@ public class MainActivity extends AppCompatActivity
     private String mCurrentTopic;
     private SharedPreferences.Editor editor;
     public static SharedPreferences.Editor selectedBusinesses;
-    private String mRandomPlace;
-    private ArrayList<Business> mRandomRestaurants;
-    private ArrayList<Business> mRandomOutdoors;
+    private HashMap<String, LinkedHashSet<String>> mRandomRestaurants;
+    private HashMap<String, LinkedHashSet<String>> mRandomMuseums;
+    private HashMap<String, LinkedHashSet<String>> mRandomParks;
     private Spinner mSpinner;
     private int callOnItemSelected;
 
@@ -251,24 +255,6 @@ public class MainActivity extends AppCompatActivity
         yelpSearch.execute(params);
     }
 
-    private void addBusinessToSelectedBusinesses (Business business) {
-        String name = business.name();
-        String lat = String.valueOf(business.location().coordinate().latitude());
-        String lon = String.valueOf(business.location().coordinate().longitude());
-        LinkedHashSet<String> hashSet = new LinkedHashSet<String>();
-        hashSet.add(lat);
-        hashSet.add(lon);
-
-        MainActivity.selectedBusinesses = getSharedPreferences(MainActivity.PREFS_NAME_BUSINESS, MainActivity.PREFS_MODE_BUSINESS).edit();
-        MainActivity.selectedBusinesses.putStringSet(name, hashSet);
-        MainActivity.selectedBusinesses.commit();
-    }
-
-    private int randomNumber (int max) {
-        Random random = new Random();
-        return random.nextInt(max);
-    }
-
     private class YelpSearch extends AsyncTask<String, Void, ArrayList<Business>> {
 
         @Override
@@ -299,6 +285,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    // yelp search restaurants first
     private class BusinessesRandomGenerator extends AsyncTask<String, Void, ArrayList<Business>> {
 
         @Override
@@ -308,45 +295,74 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         protected void onPostExecute(ArrayList<Business> businesses) {
-            mRandomPlace = mCurrentPlace;
-            mRandomRestaurants = new ArrayList<>();
-            mRandomOutdoors = new ArrayList<>();
-
-            for (Business business : businesses) {
-                Log.d("category: ", business.categories().toString());
-                if (business.categories().contains("coffee") || business.categories().contains("pizza") || business.categories().contains("delis"))
-                    mRandomRestaurants.add(business);
-                else
-                    mRandomOutdoors.add(business);
-            }
-
             // clear current route first
             getSharedPreferences(PREFS_NAME_BUSINESS, PREFS_MODE_BUSINESS).edit().clear().commit();
 
-            if (mRandomOutdoors.size() > 0) {
-                int random = randomNumber(mRandomOutdoors.size());
-                Log.d("outdoor size: ", String.valueOf(mRandomOutdoors.size()));
-                Log.d("random: ", String.valueOf(random));
-                Business curRandomOutdoor = mRandomOutdoors.get(random);
-                addBusinessToSelectedBusinesses(curRandomOutdoor);
+            mRandomRestaurants = new HashMap<>();
+            for (Business business : businesses) {
+                LinkedHashSet<String> latLonLst = new LinkedHashSet<>();
+                latLonLst.add(String.valueOf(business.location().coordinate().latitude()));
+                latLonLst.add(String.valueOf(business.location().coordinate().longitude()));
+                mRandomRestaurants.put(business.name(), latLonLst);
             }
 
-            if (mRandomRestaurants.size() > 0) {
-                int random = randomNumber(mRandomRestaurants.size());
-                Business curRandomRestaurant = mRandomRestaurants.get(random);
-                addBusinessToSelectedBusinesses(curRandomRestaurant);
+            String[] params = {mCurrentPlace, "museums"};
+            MuseumsRandomGenerator museumsRandomGenerator = new MuseumsRandomGenerator();
+            museumsRandomGenerator.execute(params);
+        }
+    }
+
+    private class MuseumsRandomGenerator extends AsyncTask<String, Void, ArrayList<Business>> {
+
+        @Override
+        protected ArrayList<Business> doInBackground(String... params) {
+            return yelpSearch(params[0], params[1]);
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<Business> businesses) {
+            mRandomMuseums = new HashMap<>();
+            for (Business business : businesses) {
+                LinkedHashSet<String> latLonLst = new LinkedHashSet<>();
+                latLonLst.add(String.valueOf(business.location().coordinate().latitude()));
+                latLonLst.add(String.valueOf(business.location().coordinate().longitude()));
+                mRandomMuseums.put(business.name(), latLonLst);
             }
 
-            if (mRandomOutdoors.size() > 1) {
-                int random = randomNumber(mRandomOutdoors.size());
-                Business curRandomOutdoor = mRandomOutdoors.get(random);
-                addBusinessToSelectedBusinesses(curRandomOutdoor);
+            String[] params = {mCurrentPlace, "parks"};
+            ParksRandomGenerator parksRandomGenerator = new ParksRandomGenerator();
+            parksRandomGenerator.execute(params);
+
+        }
+    }
+
+    private class ParksRandomGenerator extends AsyncTask<String, Void, ArrayList<Business>> {
+
+        @Override
+        protected ArrayList<Business> doInBackground(String... params) {
+            return yelpSearch(params[0], params[1]);
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<Business> businesses) {
+            mRandomParks = new HashMap<>();
+
+            for (Business business : businesses) {
+                Log.d("category: ", business.categories().toString());
+                LinkedHashSet<String> latLonLst = new LinkedHashSet<>();
+                latLonLst.add(String.valueOf(business.location().coordinate().latitude()));
+                latLonLst.add(String.valueOf(business.location().coordinate().longitude()));
+                mRandomParks.put(business.name(), latLonLst);
             }
 
             Intent intent = new Intent(MainActivity.this, MapActivity.class);
+            intent.putExtra(RANDOM_RESTAURANTS, mRandomRestaurants);
+            intent.putExtra(RANDOM_PARKS, mRandomParks);
+            intent.putExtra(RANDOM_MUSEUMS, mRandomMuseums);
             startActivity(intent);
         }
     }
+
 
     private ArrayList<Business> yelpSearch(String location, String topic) {
 
