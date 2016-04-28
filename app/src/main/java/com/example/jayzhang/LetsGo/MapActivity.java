@@ -46,6 +46,9 @@ public class MapActivity extends AppCompatActivity {
     private GoogleMap googleMap;
     ArrayList<LatLng> markerPoints = new ArrayList<LatLng>();
     SharedPreferences allDestinations;
+    HashMap<String, LinkedHashSet<String>> mRandomRestaurants;
+    HashMap<String, LinkedHashSet<String>> mRandomParks;
+    HashMap<String, LinkedHashSet<String>> mRandomMuseums;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,39 +68,69 @@ public class MapActivity extends AppCompatActivity {
         });
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        HashMap<String, LinkedHashSet<String>> randomRestaurants = (HashMap<String, LinkedHashSet<String>>) getIntent().getSerializableExtra(MainActivity.RANDOM_RESTAURANTS);
-        HashMap<String, LinkedHashSet<String>> randomOutdoors = (HashMap<String, LinkedHashSet<String>>) getIntent().getSerializableExtra(MainActivity.RANDOM_OUTDOORS);
+        mRandomRestaurants = (HashMap<String, LinkedHashSet<String>>) getIntent().getSerializableExtra(MainActivity.RANDOM_RESTAURANTS);
+        mRandomParks = (HashMap<String, LinkedHashSet<String>>) getIntent().getSerializableExtra(MainActivity.RANDOM_PARKS);
+        mRandomMuseums = (HashMap<String, LinkedHashSet<String>>) getIntent().getSerializableExtra(MainActivity.RANDOM_MUSEUMS);
 
-        if (randomRestaurants != null || randomOutdoors != null) {
-            Log.d("randomgenerator: ", "success");
-            if (randomOutdoors.size() > 0) {
-                int random = randomNumber(randomOutdoors.size());
-                Log.d("outdoor size: ", String.valueOf(randomOutdoors.size()));
-                Log.d("random: ", String.valueOf(random));
-                String name = findBusinessName(randomOutdoors, random);
-                Log.d("outdoor1 name: ", name);
-                allDestinations.edit().putStringSet(name, randomOutdoors.get(name)).commit();
+        if (mRandomRestaurants != null || mRandomParks != null || mRandomMuseums != null)
+            populateAllDestination(mRandomMuseums, mRandomRestaurants, mRandomParks);
+
+        drawMarkersMap();
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu (Menu menu) {
+        getMenuInflater().inflate(R.menu.map, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected (MenuItem menuItem) {
+        int id = menuItem.getItemId();
+        if (id == R.id.refresh) {
+            allDestinations.edit().clear().commit();
+            if (mRandomRestaurants != null || mRandomParks != null || mRandomMuseums != null)
+                populateAllDestination(mRandomMuseums, mRandomRestaurants, mRandomParks);
+
+            drawMarkersMap();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(menuItem);
+    }
+
+    private void populateAllDestination (HashMap<String, LinkedHashSet<String>> randomMuseums,
+                                         HashMap<String, LinkedHashSet<String>> randomRestaurants,
+                                         HashMap<String, LinkedHashSet<String>> randomParks) {
+
+            if (randomMuseums.size() > 0) {
+                int random = randomNumber(randomMuseums.size());
+                String name = findBusinessName(randomMuseums, random);
+                allDestinations.edit().putStringSet(name, randomMuseums.get(name)).commit();
             }
 
             if (randomRestaurants.size() > 0) {
                 int random = randomNumber(randomRestaurants.size());
                 String name = findBusinessName(randomRestaurants, random);
-                Log.d("restaurant name: ", name);
                 allDestinations.edit().putStringSet(name, randomRestaurants.get(name)).commit();
             }
 
-            if (randomOutdoors.size() > 1) {
-                int random = randomNumber(randomOutdoors.size());
-                String name = findBusinessName(randomOutdoors, random);
-                Log.d("outdoor2 name: ", name);
-                allDestinations.edit().putStringSet(name, randomOutdoors.get(name)).commit();
+            if (randomParks.size() > 1) {
+                int random = randomNumber(randomParks.size());
+                String name = findBusinessName(randomParks, random);
+                allDestinations.edit().putStringSet(name, randomParks.get(name)).commit();
             }
-        }
+    }
 
+    private void drawMarkersMap () {
         try {
             if (googleMap == null)
                 googleMap = ((MapFragment)getFragmentManager().findFragmentById(R.id.map)).getMap();
             googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+
+            markerPoints.clear();
+            googleMap.clear();
 
             // add marker
             final LatLng loc = new LatLng(38.9851198, -76.9451202);
@@ -115,7 +148,6 @@ public class MapActivity extends AppCompatActivity {
                 String[] latlon = latLonMap.get(location).toString().split(",");
                 Double lon = Double.parseDouble((latlon[1].split("\\]"))[0]);
                 Double lat = Double.parseDouble((latlon[0].split("\\["))[1]);
-                // Log.d("Lat Lon: ", String.valueOf(lat) + " " + String.valueOf(lon));
 
                 // double check for correct lat and lon
                 if (lat < lon) {
@@ -128,9 +160,9 @@ public class MapActivity extends AppCompatActivity {
                 markerPoints.add(currentDestination);
 
                 MarkerOptions optionDestination = new MarkerOptions()
-                                                  .position(currentDestination)
-                                                  .title((String) location)
-                                                  .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                        .position(currentDestination)
+                        .title((String) location)
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
                 googleMap.addMarker(optionDestination);
 
                 LatLng origin = markerPoints.get(markerPointIndex);
@@ -149,19 +181,6 @@ public class MapActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu (Menu menu) {
-        getMenuInflater().inflate(R.menu.map, menu);
-
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected (MenuItem menuItem) {
-        return super.onOptionsItemSelected(menuItem);
     }
 
     private String getDirectionsUrl(LatLng origin,LatLng dest){
