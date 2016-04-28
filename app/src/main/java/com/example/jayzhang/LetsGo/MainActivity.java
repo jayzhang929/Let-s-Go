@@ -1,10 +1,12 @@
 package com.example.jayzhang.LetsGo;
 
+import android.app.AlertDialog;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -266,6 +268,19 @@ public class MainActivity extends AppCompatActivity
         protected void onPostExecute(ArrayList<Business> businesses) {
             super.onPostExecute(businesses);
             // Log.d("businesses: ", businesses.toString());
+            if (businesses == null) {
+                AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+                alertDialog.setTitle("Undefined Location");
+                alertDialog.setMessage("Searching location is not defined. \n Please try again");
+                alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                alertDialog.show();
+            }
+
             CreatePlaceAdapter createPlaceAdapter = new CreatePlaceAdapter();
             createPlaceAdapter.execute(businesses);
         }
@@ -397,6 +412,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     private PlaceAdapter createPlaceAdapter(ArrayList<Business> businesses) {
+        if (businesses == null)
+            return null;
+
         PlaceAdapter placeAdapter = new PlaceAdapter(this);
         ArrayList<Bitmap> imageDrawables = new ArrayList<Bitmap>();
         ArrayList<Bitmap> ratingDrawables = new ArrayList<Bitmap>();
