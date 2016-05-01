@@ -110,6 +110,18 @@ public class MainActivity extends AppCompatActivity
 
         mCurrentPlace = "College Park, MD";
         mCurrentTopic = "parks";
+
+        // check whether retainedFragment exist
+        FragmentManager fragmentManager = getFragmentManager();
+        mRetainedFragment = (RetainedFragment) fragmentManager.findFragmentByTag("data");
+        if (mRetainedFragment == null) {
+            Log.d("mRetainedFragment: ", "null");
+            mRetainedFragment = new RetainedFragment();
+            fragmentManager.beginTransaction().add(mRetainedFragment, "data").commit();
+            mRetainedFragment.setName("Hello World");
+        }
+
+        Log.d("mRetainedFragment: ", mRetainedFragment.getName());
     }
 
     @Override
@@ -133,17 +145,6 @@ public class MainActivity extends AppCompatActivity
         callOnItemSelected = 0;
         mSpinner.setSelection(findIndexInCategoryArray(mCurrentTopic));
 
-        // check whether retainedFragment exist
-        FragmentManager fragmentManager = getFragmentManager();
-        mRetainedFragment = (RetainedFragment) fragmentManager.findFragmentByTag("data");
-        if (mRetainedFragment == null) {
-            mRetainedFragment = new RetainedFragment();
-            fragmentManager.beginTransaction().add(mRetainedFragment, "data").commit();
-            mRetainedFragment.setName("Hello World");
-        }
-
-        Log.d("mRetainedFragment: ", mRetainedFragment.getName());
-
         yelpAsyncSearch();
     }
 
@@ -157,13 +158,13 @@ public class MainActivity extends AppCompatActivity
         editor.putString(CURRENT_TOPIC, mCurrentTopic);
 
         editor.commit();
-
-        mRetainedFragment.setName("Hi World");
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+
+        mRetainedFragment.setName("Hi World");
 
         // editor.clear();
         // editor.commit();
