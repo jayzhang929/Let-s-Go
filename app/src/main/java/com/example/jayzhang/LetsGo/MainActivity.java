@@ -1,10 +1,12 @@
 package com.example.jayzhang.LetsGo;
 
+import android.app.AlertDialog;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -108,6 +110,20 @@ public class MainActivity extends AppCompatActivity
 
         mCurrentPlace = "College Park, MD";
         mCurrentTopic = "parks";
+
+        // check whether retainedFragment exist
+        FragmentManager fragmentManager = getFragmentManager();
+
+        mRetainedFragment = (RetainedFragment) fragmentManager.findFragmentByTag("data");
+        if (mRetainedFragment == null) {
+            Log.d("mRetainedFragment: ", "null");
+            mRetainedFragment = new RetainedFragment();
+            fragmentManager.beginTransaction().add(mRetainedFragment, "data").commit();
+            fragmentManager.executePendingTransactions();
+            mRetainedFragment.setName("Hello World");
+        }
+
+        Log.d("mRetainedFragment: ", mRetainedFragment.getName());
     }
 
     @Override
@@ -131,17 +147,6 @@ public class MainActivity extends AppCompatActivity
         callOnItemSelected = 0;
         mSpinner.setSelection(findIndexInCategoryArray(mCurrentTopic));
 
-        // check whether retainedFragment exist
-        FragmentManager fragmentManager = getFragmentManager();
-        mRetainedFragment = (RetainedFragment) fragmentManager.findFragmentByTag("data");
-        if (mRetainedFragment == null) {
-            mRetainedFragment = new RetainedFragment();
-            fragmentManager.beginTransaction().add(mRetainedFragment, "data").commit();
-            mRetainedFragment.setName("Hello World");
-        }
-
-        Log.d("mRetainedFragment: ", mRetainedFragment.getName());
-
         yelpAsyncSearch();
     }
 
@@ -155,13 +160,13 @@ public class MainActivity extends AppCompatActivity
         editor.putString(CURRENT_TOPIC, mCurrentTopic);
 
         editor.commit();
-
-        mRetainedFragment.setName("Hi World");
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+
+        mRetainedFragment.setName("Hi World");
 
         // editor.clear();
         // editor.commit();
@@ -207,14 +212,15 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.route) {
-            Intent intent = new Intent(MainActivity.this, RouteActivity.class);
-            startActivity(intent);
+            // Intent intent = new Intent(MainActivity.this, RouteActivity.class);
+            // startActivity(intent);
         } else if (id == R.id.nav_map) {
             Intent intent = new Intent(MainActivity.this, MapActivity.class);
             startActivity(intent);
         } else if (id == R.id.nav_clear_route) {
             getSharedPreferences(PREFS_NAME_BUSINESS, PREFS_MODE_BUSINESS).edit().clear().commit();
         } else if (id == R.id.nav_random_generate) {
+            mProgressDialog.show();
             BusinessesRandomGenerator businessesRandomGenerator = new BusinessesRandomGenerator();
             String[] params = {mCurrentPlace, null};
             businessesRandomGenerator.execute(params);
@@ -266,6 +272,19 @@ public class MainActivity extends AppCompatActivity
         protected void onPostExecute(ArrayList<Business> businesses) {
             super.onPostExecute(businesses);
             // Log.d("businesses: ", businesses.toString());
+            if (businesses == null) {
+                AlertDialog alertDialog = new AlertDialog.Builder(MainActivity.this).create();
+                alertDialog.setTitle("Undefined Location");
+                alertDialog.setMessage("Searching location is not defined. \n Please try again");
+                alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                alertDialog.show();
+            }
+
             CreatePlaceAdapter createPlaceAdapter = new CreatePlaceAdapter();
             createPlaceAdapter.execute(businesses);
         }
@@ -359,6 +378,7 @@ public class MainActivity extends AppCompatActivity
             intent.putExtra(RANDOM_RESTAURANTS, mRandomRestaurants);
             intent.putExtra(RANDOM_PARKS, mRandomParks);
             intent.putExtra(RANDOM_MUSEUMS, mRandomMuseums);
+            mProgressDialog.hide();
             startActivity(intent);
         }
     }
@@ -397,6 +417,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     private PlaceAdapter createPlaceAdapter(ArrayList<Business> businesses) {
+        if (businesses == null)
+            return null;
+
         PlaceAdapter placeAdapter = new PlaceAdapter(this);
         ArrayList<Bitmap> imageDrawables = new ArrayList<Bitmap>();
         ArrayList<Bitmap> ratingDrawables = new ArrayList<Bitmap>();
