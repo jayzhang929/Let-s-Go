@@ -2,6 +2,7 @@ package com.example.jayzhang.LetsGo;
 
 import android.app.Fragment;
 import android.os.Bundle;
+import android.util.Log;
 
 /**
  * Created by jayzhang on 4/26/16.
@@ -11,9 +12,8 @@ public class RetainedFragment extends Fragment {
     private String mName;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
+    public void onActivityCreated(Bundle bundle) {
+        super.onActivityCreated(bundle);
         setRetainInstance(true);
     }
 

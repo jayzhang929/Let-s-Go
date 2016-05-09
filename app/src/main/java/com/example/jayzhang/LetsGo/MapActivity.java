@@ -5,7 +5,6 @@ package com.example.jayzhang.LetsGo;
  * source from http://stackoverflow.com/questions/14710744/how-to-draw-road-directions-between-two-geocodes-in-android-google-map-v2
  */
 
-import android.*;
 import android.Manifest;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -34,7 +33,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.yelp.clientlib.entities.Business;
 
 import org.json.JSONObject;
 import java.io.BufferedReader;

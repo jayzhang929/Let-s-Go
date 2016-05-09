@@ -113,11 +113,13 @@ public class MainActivity extends AppCompatActivity
 
         // check whether retainedFragment exist
         FragmentManager fragmentManager = getFragmentManager();
+
         mRetainedFragment = (RetainedFragment) fragmentManager.findFragmentByTag("data");
         if (mRetainedFragment == null) {
             Log.d("mRetainedFragment: ", "null");
             mRetainedFragment = new RetainedFragment();
             fragmentManager.beginTransaction().add(mRetainedFragment, "data").commit();
+            fragmentManager.executePendingTransactions();
             mRetainedFragment.setName("Hello World");
         }
 
@@ -210,14 +212,15 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.route) {
-            Intent intent = new Intent(MainActivity.this, RouteActivity.class);
-            startActivity(intent);
+            // Intent intent = new Intent(MainActivity.this, RouteActivity.class);
+            // startActivity(intent);
         } else if (id == R.id.nav_map) {
             Intent intent = new Intent(MainActivity.this, MapActivity.class);
             startActivity(intent);
         } else if (id == R.id.nav_clear_route) {
             getSharedPreferences(PREFS_NAME_BUSINESS, PREFS_MODE_BUSINESS).edit().clear().commit();
         } else if (id == R.id.nav_random_generate) {
+            mProgressDialog.show();
             BusinessesRandomGenerator businessesRandomGenerator = new BusinessesRandomGenerator();
             String[] params = {mCurrentPlace, null};
             businessesRandomGenerator.execute(params);
@@ -375,6 +378,7 @@ public class MainActivity extends AppCompatActivity
             intent.putExtra(RANDOM_RESTAURANTS, mRandomRestaurants);
             intent.putExtra(RANDOM_PARKS, mRandomParks);
             intent.putExtra(RANDOM_MUSEUMS, mRandomMuseums);
+            mProgressDialog.hide();
             startActivity(intent);
         }
     }
