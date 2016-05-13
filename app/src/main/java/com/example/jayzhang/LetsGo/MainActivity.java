@@ -2,7 +2,6 @@ package com.example.jayzhang.LetsGo;
 
 import android.app.AlertDialog;
 import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
@@ -35,12 +34,10 @@ import com.yelp.clientlib.entities.Business;
 import com.yelp.clientlib.entities.SearchResponse;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Random;
 import retrofit.Response;
 
 public class MainActivity extends AppCompatActivity
@@ -56,19 +53,21 @@ public class MainActivity extends AppCompatActivity
     public final static String RANDOM_RESTAURANTS = "com.example.jayzhang.LetsGo.RANDOM_RESTAURANTS";
     public final static String RANDOM_PARKS = "com.example.jayzhang.LetsGo.RANDOM_PARKS";
     public final static String RANDOM_MUSEUMS = "com.example.jayzhang.LetsGo.RANDOM_MUSEUMS";
+    public final static String RANDOM_GENERATE_PAGE = "com.example.jayzhang.LetsGo.RANDOM_GENERATE_PAGE";
     static final String CURRENT_PLACE = "currentPlace";
     static final String CURRENT_TOPIC = "currentTopic";
     public final String PREFS_NAME = "SharedPrefs";
     public final int PREFS_MODE = 0;
     public static final String PREFS_NAME_BUSINESS = "selectedBusiness";
     public static final int PREFS_MODE_BUSINESS = 1;
+    public static final String PREFS_NAME_INTERESTS = "selectedInterests";
+    public static final int PREFS_MODE_INTERESTS = 2;
 
     private final static String consumerKey = "2q_fORhYgW2bMulCBkVOsw";
     private final static String consumerSecret = "5Xf4mXoItuhF66E373fXLFie1zI";
     private final static String token = "veqUNoadchDOaDdbHd_gUhfJXJX1r9GO";
     private final static String tokenSecret = "ZUZ88amNmp25m_-5oyqY6iTfyzU";
 
-    private RetainedFragment mRetainedFragment;
     private SearchView searchView;
     private ProgressDialog mProgressDialog;
     private PlaceAdapter mPlaceAdapter;
@@ -110,20 +109,6 @@ public class MainActivity extends AppCompatActivity
 
         mCurrentPlace = "College Park, MD";
         mCurrentTopic = "parks";
-
-        // check whether retainedFragment exist
-        FragmentManager fragmentManager = getFragmentManager();
-
-        mRetainedFragment = (RetainedFragment) fragmentManager.findFragmentByTag("data");
-        if (mRetainedFragment == null) {
-            Log.d("mRetainedFragment: ", "null");
-            mRetainedFragment = new RetainedFragment();
-            fragmentManager.beginTransaction().add(mRetainedFragment, "data").commit();
-            fragmentManager.executePendingTransactions();
-            mRetainedFragment.setName("Hello World");
-        }
-
-        Log.d("mRetainedFragment: ", mRetainedFragment.getName());
     }
 
     @Override
@@ -166,10 +151,6 @@ public class MainActivity extends AppCompatActivity
     protected void onStop() {
         super.onStop();
 
-        mRetainedFragment.setName("Hi World");
-
-        // editor.clear();
-        // editor.commit();
     }
 
     @Override
@@ -379,6 +360,7 @@ public class MainActivity extends AppCompatActivity
             intent.putExtra(RANDOM_RESTAURANTS, mRandomRestaurants);
             intent.putExtra(RANDOM_PARKS, mRandomParks);
             intent.putExtra(RANDOM_MUSEUMS, mRandomMuseums);
+            intent.putExtra(RANDOM_GENERATE_PAGE, true);
             mProgressDialog.hide();
             startActivity(intent);
         }

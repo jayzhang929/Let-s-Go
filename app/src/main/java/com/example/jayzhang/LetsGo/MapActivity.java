@@ -6,6 +6,9 @@ package com.example.jayzhang.LetsGo;
  */
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -15,9 +18,13 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -42,7 +49,7 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
     private Double defaultLat = 38.9851198;
     private Double defaultLon = -76.9451202;
     private MapGenerator mMapGenerator;
-
+    private SharedPreferences mInterests;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,9 +72,16 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
         mRandomRestaurants = (HashMap<String, LinkedHashSet<String>>) getIntent().getSerializableExtra(MainActivity.RANDOM_RESTAURANTS);
         mRandomParks = (HashMap<String, LinkedHashSet<String>>) getIntent().getSerializableExtra(MainActivity.RANDOM_PARKS);
         mRandomMuseums = (HashMap<String, LinkedHashSet<String>>) getIntent().getSerializableExtra(MainActivity.RANDOM_MUSEUMS);
+        mInterests = getSharedPreferences(MainActivity.PREFS_NAME_INTERESTS, MainActivity.PREFS_MODE_INTERESTS);
 
         if (mRandomRestaurants != null || mRandomParks != null || mRandomMuseums != null)
             populateAllDestination(mRandomMuseums, mRandomRestaurants, mRandomParks);
+
+        if (mMapGenerator == null)
+            mMapGenerator = new MapGenerator(MapActivity.this,
+                    ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap(),
+                    allDestinations,
+                    false);
 
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -82,17 +96,12 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
         else
             mGoogleApiClient.connect();
 
-        if (mMapGenerator == null)
-            mMapGenerator = new MapGenerator(MapActivity.this,
-                                            ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap(),
-                                            allDestinations,
-                                            false);
-
     }
 
     @Override
     public boolean onCreateOptionsMenu (Menu menu) {
-        getMenuInflater().inflate(R.menu.map, menu);
+        if (getIntent().getBooleanExtra(MainActivity.RANDOM_GENERATE_PAGE, false))
+            getMenuInflater().inflate(R.menu.map, menu);
         return true;
     }
 
@@ -100,15 +109,12 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
     public boolean onOptionsItemSelected (MenuItem menuItem) {
         int id = menuItem.getItemId();
         if (id == R.id.refresh) {
-            allDestinations.edit().clear().commit();
-            if (mRandomRestaurants != null || mRandomParks != null || mRandomMuseums != null)
-                populateAllDestination(mRandomMuseums, mRandomRestaurants, mRandomParks);
+            plotMarkers();
+            return true;
+        }
 
-            if (mLastLocation == null)
-                mMapGenerator.drawMarkersMap(defaultLat, defaultLon);
-            else
-                mMapGenerator.drawMarkersMap(mLastLocation.getLatitude(), mLastLocation.getLongitude());
-
+        if (id == R.id.customize) {
+            startCustimzationDialog();
             return true;
         }
 
@@ -128,10 +134,7 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
     @Override
     public void onConnected(Bundle bundle) {
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (mLastLocation != null) {
-            mMapGenerator.drawMarkersMap(mLastLocation.getLatitude(), mLastLocation.getLongitude());
-        } else
-            mMapGenerator.drawMarkersMap(defaultLat, defaultLon);
+        plotMarkers();
 
         mGoogleApiClient.disconnect();
     }
@@ -150,19 +153,19 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
                                          HashMap<String, LinkedHashSet<String>> randomRestaurants,
                                          HashMap<String, LinkedHashSet<String>> randomParks) {
 
-            if (randomMuseums.size() > 0) {
+            if (randomMuseums != null && randomMuseums.size() > 0) {
                 int random = randomNumber(randomMuseums.size());
                 String name = findBusinessName(randomMuseums, random);
                 allDestinations.edit().putStringSet(name, randomMuseums.get(name)).commit();
             }
 
-            if (randomRestaurants.size() > 0) {
+            if (randomRestaurants != null && randomRestaurants.size() > 0) {
                 int random = randomNumber(randomRestaurants.size());
                 String name = findBusinessName(randomRestaurants, random);
                 allDestinations.edit().putStringSet(name, randomRestaurants.get(name)).commit();
             }
 
-            if (randomParks.size() > 1) {
+            if (randomParks != null && randomParks.size() > 1) {
                 int random = randomNumber(randomParks.size());
                 String name = findBusinessName(randomParks, random);
                 allDestinations.edit().putStringSet(name, randomParks.get(name)).commit();
@@ -185,5 +188,67 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
         }
         return name;
     }
+
+    private void startCustimzationDialog() {
+        LayoutInflater layoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View layout = layoutInflater.inflate(R.layout.random_generate_customization, (ViewGroup) findViewById(R.id.dialogLayout));
+        boolean likeHiking = mInterests.getBoolean("Park", false);
+        boolean likeMuseum = mInterests.getBoolean("Museum", false);
+        boolean likeRestaurant = mInterests.getBoolean("Restaurant", false);
+
+        final CheckBox hikingCheckBox = (CheckBox) layout.findViewById(R.id.rdmPark);
+        final CheckBox museumCheckBox = (CheckBox) layout.findViewById(R.id.rdmMuseum);
+        final CheckBox restaurantCheckBox = (CheckBox) layout.findViewById(R.id.rdmRestaurant);
+
+        if (likeHiking) hikingCheckBox.setChecked(true);
+        if (likeMuseum) museumCheckBox.setChecked(true);
+        if (likeRestaurant) restaurantCheckBox.setChecked(true);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this).setView(layout);
+
+        builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mInterests.edit().clear().commit();
+                if (hikingCheckBox.isChecked())
+                    mInterests.edit().putBoolean("Park", true).commit();
+                if (museumCheckBox.isChecked())
+                    mInterests.edit().putBoolean("Museum", true).commit();
+                if (restaurantCheckBox.isChecked())
+                    mInterests.edit().putBoolean("Restaurant", true).commit();
+
+                plotMarkers();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+    }
+
+    private void plotMarkers() {
+        if (getIntent().getBooleanExtra(MainActivity.RANDOM_GENERATE_PAGE, false))
+            allDestinations.edit().clear().commit();
+
+        if (mRandomRestaurants != null || mRandomParks != null || mRandomMuseums != null) {
+            HashMap<String, LinkedHashSet<String>> rdmRestaurants = mInterests.contains("Restaurant") ? mRandomRestaurants : null;
+            HashMap<String, LinkedHashSet<String>> rdmMuseums = mInterests.contains("Museum") ? mRandomMuseums : null;
+            HashMap<String, LinkedHashSet<String>> rdmParks = mInterests.contains("Park") ? mRandomParks : null;
+            Log.d("mInterest, park", rdmParks == null ? "null" : "not null");
+            populateAllDestination(rdmMuseums, rdmRestaurants, rdmParks);
+        }
+
+        if (mLastLocation == null)
+            mMapGenerator.drawMarkersMap(defaultLat, defaultLon);
+        else
+            mMapGenerator.drawMarkersMap(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+    }
+
 
 }

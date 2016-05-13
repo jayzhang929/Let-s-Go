@@ -1,7 +1,6 @@
 package com.example.jayzhang.LetsGo;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.AsyncTask;
@@ -9,7 +8,6 @@ import android.util.Log;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -57,14 +55,12 @@ public class MapGenerator {
             // add marker
             final LatLng loc = new LatLng(startingLat, startingLon);
             markerPoints.add(loc);
-            MarkerOptions optionLoc = new MarkerOptions().position(loc);
-            googleMap.addMarker(optionLoc);
             googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(loc, 11));
 
             if (!mSingleBusinessMap) {
-
-                optionLoc.title("Current Location").snippet("home")
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+                MarkerOptions optionLoc = new MarkerOptions().position(loc).title("Current Location").snippet("home")
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));;
+                googleMap.addMarker(optionLoc);
 
                 Map latLonMap = allDestinations.getAll();
                 int markerPointIndex = 0;
@@ -105,7 +101,8 @@ public class MapGenerator {
                     markerPointIndex++;
                 }
             } else {
-                optionLoc.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+                MarkerOptions optionLoc = new MarkerOptions().position(loc).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));;
+                googleMap.addMarker(optionLoc);
             }
         } catch (Exception e) {
             e.printStackTrace();

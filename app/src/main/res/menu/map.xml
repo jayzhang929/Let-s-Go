@@ -5,4 +5,8 @@
         app:showAsAction="always"
         android:title="@string/app_name"
         android:icon="@drawable/ic_autorenew_24dp" />
+    <item android:id="@+id/customize"
+        app:showAsAction="always"
+        android:title="@string/app_name"
+        android:icon="@drawable/ic_mode_edit_24dp"/>
 </menu>
