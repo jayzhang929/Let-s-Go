@@ -105,6 +105,7 @@
         <fragment
             android:layout_height="400dp"
             android:layout_width="400dp"
+            android:layout_marginTop="20dp"
             android:id="@+id/business_map"
             android:layout_gravity="center"
             android:name="com.google.android.gms.maps.MapFragment" />

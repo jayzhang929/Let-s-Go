@@ -18,6 +18,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.location.places.Place;
+import com.google.android.gms.maps.MapFragment;
 import com.yelp.clientlib.entities.Business;
 
 import org.w3c.dom.Text;
@@ -85,6 +86,13 @@ public class PlaceActivity extends AppCompatActivity {
                 Toast.makeText(PlaceActivity.this, curBusinessName + " has been saved to your route!", Toast.LENGTH_SHORT).show();
             }
         });
+
+        MapGenerator mapGenerator = new MapGenerator(PlaceActivity.this,
+                                                    ((MapFragment) getFragmentManager().findFragmentById(R.id.business_map)).getMap(),
+                                                    null,
+                                                    true);
+
+        mapGenerator.drawMarkersMap(Double.parseDouble(lat), Double.parseDouble(lon));
     }
 
     @Override
