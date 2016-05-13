@@ -179,7 +179,8 @@ public class MainActivity extends AppCompatActivity
         SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
         searchView = new SearchView(this);
         menu.findItem(R.id.search).setActionView(searchView);
-
+        // menu.findItem(R.id.search).setIcon(R.drawable.ic_search);
+        // searchView.setBackgroundColor(getResources().getColor(R.color.white, null));
         searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
         searchView.setOnQueryTextListener(this);
         searchView.setOnCloseListener(this);
@@ -463,7 +464,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onClose() {
-        return true;
+        return false;
     }
 
     @Override

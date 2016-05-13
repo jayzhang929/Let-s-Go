@@ -5,6 +5,7 @@
         android:title="@string/app_name"
         android:icon="@drawable/ic_search"
         app:showAsAction="ifRoom"
+        android:actionLayout="@layout/search_view"
         android:actionViewClass="android.widget.SearchView" />
     <item
         android:id="@+id/action_settings"

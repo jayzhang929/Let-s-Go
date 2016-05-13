@@ -34,7 +34,6 @@ public class PlaceActivity extends AppCompatActivity {
     String curBusinessName;
     ArrayList<String> curBusinessAddress;
     ArrayList<String> mCurrentBusinessLatLon;
-    TableLayout distanceTable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,10 +51,19 @@ public class PlaceActivity extends AppCompatActivity {
         ImageView imageView = (ImageView) findViewById(R.id.imageView);
         imageView.setImageBitmap(curBusinessImage);
 
+        TextView name = (TextView) findViewById(R.id.name);
+        name.setText(curBusinessName);
+
+        // static data for testing purpose
+        TextView price = (TextView) findViewById(R.id.price);
+        price.setText("$");
+
+        // static data for testing purpose
+        TextView distance = (TextView) findViewById(R.id.distance);
+        distance.setText("15 miles");
+
         TextView address = (TextView) findViewById(R.id.address);
         address.setText(curBusinessAddress.get(0) + ", " + curBusinessAddress.get(1) + ", " + curBusinessAddress.get(2));
-
-        setDistanceTable();
 
         final String lat = intent.getStringExtra(MainActivity.CURRENT_BUSINESS_LAT);
         final String lon = intent.getStringExtra(MainActivity.CURRENT_BUSINESS_LON);
@@ -92,21 +100,6 @@ public class PlaceActivity extends AppCompatActivity {
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
-
-    private void setDistanceTable() {
-        SharedPreferences sharedPreferences = getSharedPreferences(MainActivity.PREFS_NAME_BUSINESS, MainActivity.PREFS_MODE_BUSINESS);
-        distanceTable = (TableLayout) findViewById(R.id.distance_table);
-
-        Map latLonMap = sharedPreferences.getAll();
-        for (Object business : latLonMap.keySet()) {
-            // Log.d("current key: ", latLonMap.get(business).toString());
-            setDistanceTableRow((String) business, latLonMap.get(business).toString());
-        }
-    }
-
-    private void setDistanceTableRow(String name, String latLon) {
-
     }
 
 }
