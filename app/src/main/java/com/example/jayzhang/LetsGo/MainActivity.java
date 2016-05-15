@@ -1,7 +1,6 @@
 package com.example.jayzhang.LetsGo;
 
 import android.app.AlertDialog;
-import android.app.FragmentManager;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
@@ -172,31 +171,13 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.route) {
-            // Intent intent = new Intent(MainActivity.this, RouteActivity.class);
-            // startActivity(intent);
-        } else if (id == R.id.nav_map) {
+        if (id == R.id.nav_map) {
             Intent intent = new Intent(MainActivity.this, MapActivity.class);
             startActivity(intent);
         } else if (id == R.id.nav_clear_route) {
@@ -206,10 +187,6 @@ public class MainActivity extends AppCompatActivity
             BusinessesRandomGenerator businessesRandomGenerator = new BusinessesRandomGenerator();
             String[] params = {mCurrentPlace, null};
             businessesRandomGenerator.execute(params);
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
