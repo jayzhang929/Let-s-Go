@@ -108,10 +108,24 @@ public class PlaceActivity extends AppCompatActivity implements GoogleApiClient.
                     .build();
         }
 
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
-            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION);
-        else
-            mGoogleApiClient.connect();
+        SharedPreferences startingLoc = getSharedPreferences(MainActivity.PREFS_STARTING_LOCATION, MainActivity.PREFS_MODE_STARTING_LOCATION);
+        if (startingLoc.getString(MainActivity.CURRENT_STARTING_LOCATION, "current location").equals("current location")) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION);
+            else
+                mGoogleApiClient.connect();
+        } else {
+            Location currentStartingPoint = new Location("Starting Location");
+            currentStartingPoint.setLatitude(Double.parseDouble(startingLoc.getString(MainActivity.CURRENT_STARTING_LAT, "null")));
+            currentStartingPoint.setLongitude(Double.parseDouble(startingLoc.getString(MainActivity.CURRENT_STARTING_LON, "null")));
+            Log.d("mBusinessLocation: ", String.valueOf(mBusinessLocation.getLatitude()) + " " + String.valueOf(mBusinessLocation.getLongitude()));
+            Log.d("current S P: ", startingLoc.getString(MainActivity.CURRENT_STARTING_LAT, "null") + " " + startingLoc.getString(MainActivity.CURRENT_STARTING_LON, "null"));
+
+            if (currentStartingPoint != null) {
+                // find distance
+                populateDistance(currentStartingPoint);
+            }
+        }
 
         mMapGenerator = new MapGenerator(PlaceActivity.this,
                                                     ((MapFragment) getFragmentManager().findFragmentById(R.id.business_map)).getMap(),
@@ -148,12 +162,11 @@ public class PlaceActivity extends AppCompatActivity implements GoogleApiClient.
     @Override
     public void onConnected(Bundle bundle) {
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        Log.d("mBusinessLocation: ", String.valueOf(mBusinessLocation.getLatitude()) + " " + String.valueOf(mBusinessLocation.getLongitude()));
+        Log.d("current location: ", String.valueOf(mLastLocation.getLatitude()) + " " + String.valueOf(mLastLocation.getLongitude()));
         if (mLastLocation != null) {
             // find distance
-            float distanceInMeters = mBusinessLocation.distanceTo(mLastLocation);
-            double distanceInMiles = distanceInMeters / METER_TO_MILE_CONVERSION;
-            TextView distanceTextView = (TextView) findViewById(R.id.distance);
-            distanceTextView.setText(String.valueOf((int) distanceInMiles) + " miles");
+            populateDistance(mLastLocation);
         }
 
         mGoogleApiClient.disconnect();
@@ -167,5 +180,13 @@ public class PlaceActivity extends AppCompatActivity implements GoogleApiClient.
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
 
+    }
+
+    private void populateDistance(Location startingLocation) {
+        float distanceInMeters = mBusinessLocation.distanceTo(startingLocation);
+        Log.d("distance: ", String.valueOf(distanceInMeters));
+        double distanceInMiles = distanceInMeters / METER_TO_MILE_CONVERSION;
+        TextView distanceTextView = (TextView) findViewById(R.id.distance);
+        distanceTextView.setText(String.valueOf((int) distanceInMiles + 1) + " miles");
     }
 }

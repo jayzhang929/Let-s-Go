@@ -8,9 +8,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -20,8 +23,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.SearchView;
 import android.widget.Spinner;
@@ -36,6 +41,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import retrofit.Response;
 
@@ -55,12 +61,17 @@ public class MainActivity extends AppCompatActivity
     public final static String RANDOM_GENERATE_PAGE = "com.example.jayzhang.LetsGo.RANDOM_GENERATE_PAGE";
     static final String CURRENT_PLACE = "currentPlace";
     static final String CURRENT_TOPIC = "currentTopic";
+    public static final String CURRENT_STARTING_LOCATION = "currentStartingLocation";
+    public static final String CURRENT_STARTING_LAT = "currentStartingLat";
+    public static final String CURRENT_STARTING_LON = "currentStartingLon";
     public final String PREFS_NAME = "SharedPrefs";
     public final int PREFS_MODE = 0;
     public static final String PREFS_NAME_BUSINESS = "selectedBusiness";
     public static final int PREFS_MODE_BUSINESS = 1;
     public static final String PREFS_NAME_INTERESTS = "selectedInterests";
     public static final int PREFS_MODE_INTERESTS = 2;
+    public static final String PREFS_STARTING_LOCATION = "selectedStartingLocation";
+    public static final int PREFS_MODE_STARTING_LOCATION = 3;
 
     private final static String consumerKey = "2q_fORhYgW2bMulCBkVOsw";
     private final static String consumerSecret = "5Xf4mXoItuhF66E373fXLFie1zI";
@@ -108,6 +119,7 @@ public class MainActivity extends AppCompatActivity
 
         mCurrentPlace = "College Park, MD";
         mCurrentTopic = "parks";
+
     }
 
     @Override
@@ -187,6 +199,8 @@ public class MainActivity extends AppCompatActivity
             BusinessesRandomGenerator businessesRandomGenerator = new BusinessesRandomGenerator();
             String[] params = {mCurrentPlace, null};
             businessesRandomGenerator.execute(params);
+        } else if (id == R.id.starting_location_item) {
+            startingLocationCustomizationDialog();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -404,7 +418,6 @@ public class MainActivity extends AppCompatActivity
         GridView gridView = (GridView) findViewById(R.id.gridview);
         gridView.setAdapter(mPlaceAdapter);
         mProgressDialog.hide();
-        Log.d("images: ", "all created");
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -457,4 +470,61 @@ public class MainActivity extends AppCompatActivity
         }
         return index;
     }
+
+    private void startingLocationCustomizationDialog() {
+        LayoutInflater layoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View view = layoutInflater.inflate(R.layout.starting_location_customization, (ViewGroup) findViewById(R.id.starting_location_dialog));
+
+        final EditText editText = (EditText) view.findViewById(R.id.default_starting_location);
+
+        final SharedPreferences startingLoc = getSharedPreferences(PREFS_STARTING_LOCATION, PREFS_MODE_STARTING_LOCATION);
+        editText.setHint(startingLoc.getString(CURRENT_STARTING_LOCATION, "current location"));
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this).setView(view);
+        builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String startingAddress = editText.getText().toString();
+                Geocoder geocoder = new Geocoder(MainActivity.this);
+                List<Address> addresses;
+
+                try {
+                    addresses = geocoder.getFromLocationName(startingAddress, 5);
+                    if (addresses == null || addresses.size() < 1) {
+                        Log.d("starting loc: ", "not found");
+                        return;
+                    }
+
+                    Address location = addresses.get(0);
+                    Double lat = location.getLatitude();
+                    Double lon = location.getLongitude();
+
+                    if (startingAddress.equals("current location")) {
+                        startingLoc.edit().clear().commit();
+                    } else {
+                        Log.d("starting loc: ", String.valueOf(lat) + " " + String.valueOf(lon));
+                        startingLoc.edit().putString(CURRENT_STARTING_LOCATION, startingAddress).commit();
+                        startingLoc.edit().putString(CURRENT_STARTING_LAT, String.valueOf(lat)).commit();
+                        startingLoc.edit().putString(CURRENT_STARTING_LON, String.valueOf(lon)).commit();
+                    }
+
+                } catch (IOException e) {
+
+                }
+
+            }
+        });
+
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+    }
+    
 }

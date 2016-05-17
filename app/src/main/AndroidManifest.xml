@@ -16,6 +16,11 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
+        <meta-data
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="AIzaSyAaAFoPhCIOkCTgDjrbjfkqXAAzv9ZmYxc" />
+
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"
@@ -50,10 +55,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.jayzhang.LetsGo.MainActivity" />
         </activity>
-
-        <meta-data
-            android:name="com.google.android.maps.v2.API_KEY"
-            android:value="AIzaSyAaDoRkFi9mTbU4dBAARo6znUwYxvP3Oxs" />
 
         <activity
             android:name=".MapActivity"

@@ -50,6 +50,7 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
     private Double defaultLon = -76.9451202;
     private MapGenerator mMapGenerator;
     private SharedPreferences mInterests;
+    private SharedPreferences mStartingLoc;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,10 +92,14 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
                                 .build();
         }
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION);
-        else
-            mGoogleApiClient.connect();
+        mStartingLoc = getSharedPreferences(MainActivity.PREFS_STARTING_LOCATION, MainActivity.PREFS_MODE_STARTING_LOCATION);
+        if (mStartingLoc.getString(MainActivity.CURRENT_STARTING_LOCATION, "current location").equals("current location")) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION);
+            else
+                mGoogleApiClient.connect();
+        } else
+            plotMarkers();
 
     }
 
@@ -244,10 +249,15 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
             populateAllDestination(rdmMuseums, rdmRestaurants, rdmParks);
         }
 
-        if (mLastLocation == null)
-            mMapGenerator.drawMarkersMap(defaultLat, defaultLon);
-        else
-            mMapGenerator.drawMarkersMap(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+        if (mStartingLoc.getString(MainActivity.CURRENT_STARTING_LOCATION, "current location").equals("current location")) {
+            if (mLastLocation == null)
+                mMapGenerator.drawMarkersMap(defaultLat, defaultLon);
+            else
+                mMapGenerator.drawMarkersMap(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+        } else {
+            mMapGenerator.drawMarkersMap(Double.parseDouble(mStartingLoc.getString(MainActivity.CURRENT_STARTING_LAT, "null")),
+                                         Double.parseDouble(mStartingLoc.getString(MainActivity.CURRENT_STARTING_LON, "null")));
+        }
     }
 
 
