@@ -31,6 +31,7 @@ import android.widget.GridView;
 import android.widget.SearchView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.yelp.clientlib.connection.YelpAPI;
 import com.yelp.clientlib.connection.YelpAPIFactory;
@@ -508,6 +509,8 @@ public class MainActivity extends AppCompatActivity
                         startingLoc.edit().putString(CURRENT_STARTING_LAT, String.valueOf(lat)).commit();
                         startingLoc.edit().putString(CURRENT_STARTING_LON, String.valueOf(lon)).commit();
                     }
+
+                    Toast.makeText(MainActivity.this, "Your starting location has been set to " + startingAddress, Toast.LENGTH_LONG).show();
 
                 } catch (IOException e) {
 
