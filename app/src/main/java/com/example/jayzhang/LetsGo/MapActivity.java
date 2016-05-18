@@ -9,9 +9,11 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -67,6 +69,14 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.Co
             public void onClick(View view) {
                 Toast.makeText(MapActivity.this, "Going on the trip!", Toast.LENGTH_SHORT).show();
                 allDestinations.edit().clear().commit();
+                Intent navigation = new Intent(Intent.ACTION_VIEW, Uri.parse("http://maps.google.com/maps?saddr="
+                        + MapGenerator.mStartingLocation.latitude + ","
+                        + MapGenerator.mStartingLocation.longitude + "&daddr="
+                        + MapGenerator.mCurrentDestination.latitude + "," + MapGenerator.mCurrentDestination.longitude));
+
+                navigation.setClassName("com.google.android.apps.maps", "com.google.android.maps.MapsActivity");
+
+                startActivity(navigation);
             }
         });
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);

@@ -36,6 +36,8 @@ public class MapGenerator {
     private GoogleMap googleMap;
     ArrayList<LatLng> markerPoints = new ArrayList<LatLng>();
     Boolean mSingleBusinessMap;
+    public static LatLng mCurrentDestination;
+    public static LatLng mStartingLocation;
 
     public MapGenerator(Activity activity, GoogleMap googleMap, SharedPreferences allDestinations, Boolean singleBusinessMap) {
         mActivity = activity;
@@ -54,6 +56,7 @@ public class MapGenerator {
 
             // add marker
             final LatLng loc = new LatLng(startingLat, startingLon);
+            mStartingLocation = loc;
             markerPoints.add(loc);
             googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(loc, 11));
 
@@ -79,6 +82,7 @@ public class MapGenerator {
                     }
 
                     LatLng currentDestination = new LatLng(lat, lon);
+                    mCurrentDestination = currentDestination;
                     markerPoints.add(currentDestination);
 
                     MarkerOptions optionDestination = new MarkerOptions()
